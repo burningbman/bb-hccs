@@ -48,6 +48,7 @@ import {
     $skill,
     $slot,
     get,
+    have,
     Macro,
     set,
 } from 'libram';
@@ -343,11 +344,14 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
     if (haveEffect($effect`Feeling Lost`)) abort('Attempting to Carol Ghost while feeling lost');
 
     if (
-        haveEffect($effect`Holiday Yoked`) ||
-        haveEffect($effect`Do You Crush What I Crush?`) ||
-        haveEffect($effect`Let It Snow/Boil/Stink/Frighten/Grease`)
+        have($effect`Holiday Yoked`) ||
+        have($effect`Do You Crush What I Crush?`) ||
+        have($effect`Let It Snow/Boil/Stink/Frighten/Grease`)
     ) {
-        abort('Attempting to Carol Ghost with previous effect active.');
+        // allow carol ghosting again if getting same effect and have a custom macro
+        if (!have(effect) || !macro) {
+            abort('Attempting to Carol Ghost with previous effect active.');
+        }
     }
 
     const offHand = equippedItem($slot`off-hand`);

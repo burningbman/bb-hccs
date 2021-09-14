@@ -11,17 +11,16 @@ import {
     drink,
     eat,
     equip,
+    equippedAmount,
     equippedItem,
     familiarWeight,
     gametimeToInt,
     getProperty,
     handlingChoice,
     haveEffect,
-    haveFamiliar,
     haveOutfit,
     haveSkill,
     mallPrice,
-    maximize,
     myAdventures,
     myBasestat,
     myBuffedstat,
@@ -32,17 +31,21 @@ import {
     myInebriety,
     myLevel,
     myMaxhp,
+    myMeat,
     myMp,
     mySpleenUse,
     myTurncount,
     numericModifier,
+    outfit,
     print,
     putShop,
     restoreHp,
+    restoreMp,
     runChoice,
     runCombat,
     setAutoAttack,
     setProperty,
+    shopPrice,
     toInt,
     toItem,
     use,
@@ -136,13 +139,18 @@ function upkeepHpAndMp() {
 function doGuaranteedGoblin() {
     // kill a kramco for the sausage before coiling wire
     if (!haveEffect($effect`Feeling Lost`) && sausageFightGuaranteed()) {
+        if (myMp() < 12) {
+            restoreMp(20);
+        }
         const offHand = equippedItem($slot`off-hand`);
         equip($item`Kramco Sausage-o-Matic™`);
         Macro.if_('!monstername "sausage goblin"', new Macro().step('abort'))
+            .trySkill($skill`Barrage of Tears`)
+            .trySkill($skill`Spittoon Monsoon`)
+            .trySkill($skill`Beach Combo`)
             .skill($skill`Saucestorm`)
             .repeat().setAutoAttack();
         adv1($location`Noob Cave`);
-        setAutoAttack(0);
         equip(offHand);
     }
 }
@@ -170,6 +178,7 @@ function runTest(testId: Test) {
         if (!testDone(testId)) {
             doGuaranteedGoblin();
             test.doTestPrep();
+            if (haveOutfit(`hccs_${Test[testId]}`)) outfit(`hccs_${Test[testId]}`);
             let predictedTurns = 60;
             if (testId !== Test.DONATE && testId !== Test.COIL_WIRE) {
                 predictedTurns = test.getPredictedTurns();
@@ -183,11 +192,11 @@ function runTest(testId: Test) {
                     eat(1, $item`magical sausage`);
                 }
 
-                [$slot`hat`, $slot`back`, $slot`weapon`, $slot`off-hand`, $slot`pants`, $slot`shirt`, $slot`acc1`, $slot`acc2`, $slot`acc3`, $slot`familiar`].forEach((slot) =>
-                    print(`${slot.toString()}: ${equippedItem(slot)}`)
-                )
+                // [$slot`hat`, $slot`back`, $slot`weapon`, $slot`off-hand`, $slot`pants`, $slot`shirt`, $slot`acc1`, $slot`acc2`, $slot`acc3`, $slot`familiar`].forEach((slot) =>
+                //     print(`${slot.toString()}: ${equippedItem(slot)}`)
+                // )
             }
-            set(`_hccsTestExpected${Test[testId]}`, predictedTurns);
+            set(`_hccsTestExpected${testId}`, predictedTurns);
             clickTestButton(testId);
         } else {
             print(`Test ${testId} already completed.`);
@@ -195,14 +204,14 @@ function runTest(testId: Test) {
     }
 }
 
-const getBatteries = () => {
-    // use the power plant
-    cliExecute("inv_use.php?pwd&whichitem=10738");
-
-    for (let i = 1; i < 8; i++) {
-        cliExecute(`choice.php?pwd&whichchoice=1448&option=1&pp=${i}`);
-    }
-};
+// const getBatteries = () => {
+//     // use the power plant
+//     cliExecute("inv_use.php?pwd&whichitem=10738");
+//
+//     for (let i = 1; i < 8; i++) {
+//         cliExecute(`choice.php?pwd&whichchoice=1448&option=1&pp=${i}`);
+//     }
+// };
 
 const ensureDeepDarkVisions = () => {
     if (have($effect`Visions of the Deep Dark Deeps`)) return;
@@ -224,12 +233,15 @@ const ensureDeepDarkVisions = () => {
 function setup() {
     if (availableAmount($item`blood-faced volleyball`) > 0 || myLevel() > 1) return;
 
+    set('bb_ScriptStartCS', gametimeToInt());
+    set('autoSatisfyWithNPCs', true);
+    set('autoSatisfyWithCoinmasters', true);
+    set('hpAutoRecovery', .8);
+
     // reset actual counts for validation
     for (const test in Test) {
         set(`_hccsTestActual${Test[test]}`, -1);
     }
-
-    set('bb_ScriptStartCS', gametimeToInt());
 
     setClan('Bonus Adventures from Hell');
 
@@ -243,16 +255,12 @@ function setup() {
     autosell(5, $item`porquoise`);
     autosell(5, $item`hamethyst`);
 
-    // Do buy stuff from NPC stores and coinmasters.
-    setProperty('_saved_autoSatisfyWithNPCs', getProperty('autoSatisfyWithNPCs'));
-    setProperty('autoSatisfyWithNPCs', 'true');
-    setProperty('_saved_autoSatisfyWithCoinmasters', getProperty('autoSatisfyWithCoinmasters'));
-    setProperty('autoSatisfyWithCoinmasters', 'true');
-
     visitUrl('council.php'); // Initialize council.
     visitUrl('clan_viplounge.php?action=fwshop'); // manual visit to fireworks shop to allow purchases
     visitUrl('clan_viplounge.php?action=lookingglass&whichfloor=2'); // get DRINK ME potion
     visitUrl('shop.php?whichshop=lathe&action=buyitem&quantity=1&whichrow=1162&pwd'); // lathe wand
+
+    ensureItem(1, $item`toy accordion`);
 
     cliExecute('mood apathetic');
     cliExecute('ccs bean-hccs');
@@ -260,10 +268,12 @@ function setup() {
     cliExecute('backupcamera ml');
     cliExecute('boombox fists');
     cliExecute('mcd 10');
-    cliExecute('retrocape mysticality');
+    cliExecute('retrocape mysticality thrill');
+    cliExecute('fold makeshift garbage shirt');
 
     setChoice(1340, 3); // Turn off Lil' Doctor quests.
     setChoice(1387, 3); // set saber to drop items
+    setChoice(1410, 2); // pick mushroom
 
     // Upgrade saber for fam wt
     visitUrl('main.php?action=may4');
@@ -278,38 +288,28 @@ function setup() {
         }
     }
 
-    ensureItem(1, $item`toy accordion`);
-    ensureItem(1, $item`fish hatchet`);
+    if (!get('_floundryItemCreated')) {
+        cliExecute('acquire fish hatchet');
+    }
 
-    // if (!get('_floundryItemCreated')) {
-    //     cliExecute('acquire fish hatchet');
-    // }
+    // getBatteries();
 
-    getBatteries();
-
-    ensureSewerItem(1, $item`turtle totem`);
+    // ensureSewerItem(1, $item`turtle totem`);
     ensureSewerItem(1, $item`saucepan`);
 
     // get blood-faced volleyball
-    cliExecute('acquire seal tooth');
-    cliExecute('acquire volleyball');
-    use($item`seal tooth`);
-    use($item`volleyball`);
+    // cliExecute('acquire seal tooth');
+    // cliExecute('acquire volleyball');
+    // use($item`seal tooth`);
+    // use($item`volleyball`);
+    pullIfPossible(1, $item`blood-faced volleyball`, 2000);
 }
 
 function getPizzaIngredients() {
     if (have($item`cherry`) || myLevel() > 1) return;
 
     // Put on some regen gear
-    equip($item`Fourth of May Cosplay Saber`);
-    equip($item`familiar scrapbook`); // maxmize scrap drops during saber YRs
-    equip($item`Cargo Cultist Shorts`);
-    equip($item`unwrapped knock-off retro superhero cape`);
-    equip($slot`acc1`, $item`Beach Comb`);
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
-    equip($slot`acc3`, $item`Lil' Doctor™ bag`);
-
-    useFamiliar($familiar`Plastic Pirate Skull`); // maxmize scrap drops
+    outfit('hccs_pizza');
 
     // get antique packet of ketchup for MAL pizza
     if (!have($item`antique packet of ketchup`)) {
@@ -331,13 +331,12 @@ function getPizzaIngredients() {
     }
     adv1($location`The Skeleton Store`);
     mapAndSaberMonster($location`The Skeleton Store`, $monster`novelty tropical skeleton`);
-    // autosell(availableAmount($item`lemon`), $item`lemon`);
-    // autosell(availableAmount($item`strawberry`), $item`strawberry`);
-    // autosell(availableAmount($item`orange`), $item`orange`);
 }
 
 function useStatGains() {
     if (!have($item`a ten-percent bonus`)) return;
+
+    outfit('hccs_pizza');
 
     if (get('getawayCampsiteUnlocked') && haveEffect($effect`That's Just Cloud-Talk, Man`) === 0) {
         visitUrl('place.php?whichplace=campaway&action=campaway_sky');
@@ -347,8 +346,6 @@ function useStatGains() {
     ensureEffect($effect`Thaumodynamic`);
     ensurePullEffect($effect`Category`, $item`abstraction: category`);
     ensurePullEffect($effect`Different Way of Seeing Things`, $item`non-Euclidean angle`);
-
-    equip($item`familiar scrapbook`); // make use of exp boosts
 
     if (Math.round(numericModifier('mysticality experience percent')) < 125) {
         throw 'Insufficient +stat%.';
@@ -368,7 +365,7 @@ function useStatGains() {
 }
 
 function buffBeforeGoblins() {
-    if (have($effect`Song of Bravado`) || myLevel() >= 13) return;
+    if (have($effect`Holiday Yoked`) || myLevel() >= 13) return;
 
     // MAL pizza
     if (!haveEffect($effect`Mallowed Out`)) {
@@ -420,66 +417,48 @@ function buffBeforeGoblins() {
     if (!haveEffect($effect`Holiday Yoked`)) {
         adventureWithCarolGhost($effect`Holiday Yoked`);
     }
-
-    // eat the sausage gotten earlier to restore MP
-    if (myMp() < 100) {
-        ensureCreateItem(1, $item`magical sausage`);
-        eat($item`magical sausage`);
-    }
-
-    ensureEffect($effect`Blessing of your favorite Bird`); // Should be 75% myst for now.
-    ensureEffect($effect`Song of Bravado`);
-    ensureSong($effect`Polka of Plenty`);
 }
 
 function doFreeFights() {
     if (get('_neverendingPartyFreeTurns') === 10) return;
 
-    cliExecute('fold makeshift garbage shirt');
-    equip($item`makeshift garbage shirt`);
-    equip($item`unwrapped knock-off retro superhero cape`);
-    equip($item`weeping willow wand`);
-    equip($item`familiar scrapbook`);
-    equip($item`Cargo Cultist Shorts`);
-    equip($slot`acc1`, $item`Beach Comb`);
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
-    equip($slot`acc3`, $item`backup camera`);
+    outfit('hccs_freefights');
 
     useFamiliar($familiar`Hovering Sombrero`);
     equip($slot`familiar`, $item`miniature crystal ball`);
 
     upkeepHpAndMp();
-    const mood = new Mood();
-    mood.skill($skill`Astral Shell`);
-    mood.skill($skill`Get Big`);
-    mood.skill($skill`Blood Bond`);
-    mood.skill($skill`Blood Bubble`);
-    mood.skill($skill`Drescher's Annoying Noise`);
-    mood.skill($skill`Elemental Saucesphere`);
-    mood.skill($skill`Empathy of the Newt`);
-    mood.skill($skill`Inscrutable Gaze`);
-    mood.skill($skill`Leash of Linguini`);
-    mood.skill($skill`Pride of the Puffin`);
-    mood.skill($skill`Singer's Faithful Ocelot`);
+
+    ensureEffect($effect`Blessing of your favorite Bird`); // Should be 75% myst for now.
+    ensureEffect($effect`Song of Bravado`);
+    ensureSong($effect`Polka of Plenty`);
+    ensureEffect($effect`Big`);
+    ensureEffect($effect`Blood Bond`);
+    ensureEffect($effect`Blood Bubble`);
+    ensureEffect($effect`Drescher's Annoying Noise`);
+    ensureEffect($effect`Elemental Saucesphere`);
+    // ensureEffect($effect`Empathy`);
+    ensureEffect($effect`Inscrutable Gaze`);
+    ensureEffect($effect`Leash of Linguini`);
+    ensureEffect($effect`Pride of the Puffin`);
+    ensureEffect($effect`Singer's Faithful Ocelot`);
     haveSkill($skill`Stevedave's Shanty of Superiority`) &&
-        mood.skill($skill`Stevedave's Shanty of Superiority`);
-    mood.skill($skill`Ur-Kel's Aria of Annoyance`);
-    mood.skill($skill`Feel Excitement`);
-    mood.execute();
+        ensureEffect($effect`Stevedave's Shanty of Superiority`);
+    ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
+    ensureEffect($effect`Feeling Excited`);
 
     // kill the mushroom and chew mushroom tea
-    upkeepHpAndMp();
     if (!get('_mushroomGardenVisited')) {
+        equip($item`familiar scrapbook`); // don't try to find kramco here
         Macro.skill($skill`Barrage of Tears`)
             .skill($skill`Spittoon Monsoon`)
             .skill($skill`Saucestorm`)
             .repeat()
             .setAutoAttack();
         adv1($location`Your Mushroom Garden`);
-        setAutoAttack(0);
-        setChoice(1410, 2);
         adv1($location`Your Mushroom Garden`);
         use($item`free-range mushroom`);
+        outfit('hccs_freefights');
     }
 
     if (!haveEffect($effect`Mush-Maw`)) {
@@ -488,9 +467,22 @@ function doFreeFights() {
     }
 
     // Neverending Party
-    setChoice(1322, 2); // Here to Party
-    setChoice(1324, 1); // It Hasn't Ended, It's Just Paused; Head upstairs
-    setChoice(1325, 2); // A Room With a View... Of a Bed; Read the tomes
+    if (get("_questPartyFair") === "unstarted") {
+        setChoice(1322, 0);
+        visitUrl("adventure.php?snarfblat=528");
+        if (get("_questPartyFairQuest") === "food") {
+            runChoice(1);
+            setChoice(1324, 2);
+            setChoice(1326, 3);
+        } else if (get("_questPartyFairQuest") === "booze") {
+            runChoice(1);
+            setChoice(1324, 3);
+            setChoice(1327, 3);
+        } else {
+            runChoice(2);
+            setChoice(1324, 5);
+        }
+    }
 
     Macro.trySkill($skill`Feel Pride`)
         .skill($skill`Barrage of Tears`)
@@ -503,18 +495,15 @@ function doFreeFights() {
     }
 
     // kill a Kramco to prep the back-up camera
-    if (sausageFightGuaranteed()) {
-        upkeepHpAndMp();
-        equip($item`Kramco Sausage-o-Matic™`);
-        Macro.if_('!monstername "sausage goblin"', new Macro().step('abort'))
-            .skill($skill`Barrage of Tears`)
-            .skill($skill`Spittoon Monsoon`)
-            .skill($skill`Saucestorm`).setAutoAttack();
-        adv1($location`Noob Cave`);
-        setAutoAttack(0);
-    }
-
-    equip($item`familiar scrapbook`);
+    // if (sausageFightGuaranteed()) {
+    //     upkeepHpAndMp();
+    //     equip($item`Kramco Sausage-o-Matic™`);
+    //     Macro.if_('!monstername "sausage goblin"', new Macro().step('abort'))
+    //         .skill($skill`Barrage of Tears`)
+    //         .skill($skill`Spittoon Monsoon`)
+    //         .skill($skill`Saucestorm`).setAutoAttack();
+    //     adv1($location`Noob Cave`);
+    // }
 
     // 10x back-up sausage fight @ The Dire Warren with Sombrero
     // Macro.skill($skill`back-up to your last enemy`)
@@ -529,10 +518,9 @@ function doFreeFights() {
     //     adv1($location`The Dire Warren`, -1, '');
     // }
 
-    setAutoAttack(0);
     restoreHp(myMaxhp());
 
-    cliExecute('mood apathetic');
+    cliExecute('fold wad of used tape'); // for stat and item tests
 }
 
 function doHpTest() {
@@ -561,8 +549,6 @@ function doMoxTest() {
     // ensureEffect($effect`Mariachi Mood`);
     cliExecute('retrocape moxie');
 
-    maximize('moxie -tie', false);
-
     if (myBuffedstat($stat`moxie`) - myBasestat($stat`moxie`) < 1770) {
         useSkill(1, $skill`Acquire Rhinestones`);
         use(availableAmount($item`rhinestone`), $item`rhinestone`);
@@ -575,15 +561,12 @@ function doMusTest() {
 
     ensureEffect($effect`Big`);
     ensureEffect($effect`Song of Bravado`);
+    ensureEffect($effect`Rage of the Reindeer`);
     // ensureSong($effect`Stevedave's Shanty of Superiority`);
     // ensureSong($effect`Power Ballad of the Arrowsmith`);
-    ensureEffect($effect`Rage of the Reindeer`);
     // ensureEffect($effect`Quiet Determination`);
     // ensureEffect($effect`Disdain of the War Snapper`);
-    cliExecute('retrocape muscle');
-
-    haveFamiliar($familiar`Left-Hand Man`) && useFamiliar($familiar`Left-Hand Man`);
-    maximize('muscle -tie', false);
+    // cliExecute('retrocape muscle');
 }
 
 function doItemTest() {
@@ -591,8 +574,9 @@ function doItemTest() {
 
     // Create CER pizza
     if (!haveEffect($effect`Certainty`)) {
-        ensureSewerItem(1, $item`ravioli hat`);
-        eatPizza( // TODO
+        useFamiliar($familiar`Exotic Parrot`);
+        if (!have($item`runproof mascara`)) ensureSewerItem(1, $item`ravioli hat`);
+        eatPizza(
             have($item`cosmetic football`) ? $item`cosmetic football` : $item`coconut shell`,
             $item`ear candle`,
             have($item`runproof mascara`) ? $item`runproof mascara` : $item`ravioli hat`,
@@ -612,35 +596,26 @@ function doItemTest() {
 
     !get('_clanFortuneBuffUsed') && cliExecute('fortune buff item');
     !haveEffect($effect`Infernal Thirst`) && cliExecute('genie effect Infernal Thirst');
-    !haveEffect($effect`Lantern-Charged`) && use($item`battery (lantern)`);
+    // !haveEffect($effect`Lantern-Charged`) && use($item`battery (lantern)`);
     ensureEffect($effect`Singer's Faithful Ocelot`);
     ensureEffect($effect`Fat Leon's Phat Loot Lyric`);
+    ensureEffect($effect`The Spirit of Taking`);
     ensureEffect($effect`Steely-Eyed Squint`);
-    ensureEffect($effect`Nearly All-Natural`); // bag of grain
     ensureEffect($effect`Blessing of the Bird`);
+    ensureEffect($effect`Nearly All-Natural`); // bag of grain
     ensureEffect($effect`El Aroma de Salsa`); // Salsa Caliente™ candle
-
-    equip($item`oversized sparkler`);
-    equip($item`Kramco Sausage-o-Matic™`);
-
-    maximize(
-        'item, 2 booze drop, -equip broken champagne bottle, -equip surprisingly capacious handbag -tie',
-        false
-    );
 }
 
 function doFamiliarTest() {
     if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
-    ensureEffect($effect`Blood Bond`);
-    ensureEffect($effect`Leash of Linguini`);
-    ensureEffect($effect`Empathy`);
 
     // These should have fallen through all the way from leveling.
     ensureEffect($effect`Fidoxene`);
     ensureEffect($effect`Billiards Belligerence`);
+    ensureEffect($effect`Blood Bond`);
+    ensureEffect($effect`Leash of Linguini`);
+    // ensureEffect($effect`Empathy`);
 
-    useFamiliar($familiar`none`);
-    equip($item`familiar scrapbook`);
     equip($item`Fourth of May Cosplay Saber`);
 
     if (!have($effect`Meteor Showered`)) {
@@ -648,17 +623,10 @@ function doFamiliarTest() {
         adv1($location`The Dire Warren`);
         if (handlingChoice()) runChoice(3);
     }
-
-    useFamiliar($familiar`Exotic Parrot`);
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
-    equip($slot`acc3`, $item`Beach Comb`);
-    equip($slot`familiar`, $item`cracker`);
-    maximize('familiar weight -tie', false);
 }
 
 function doWeaponTest() {
     ensureMeteorShowerAndCarolGhostEffect();
-
     ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
 
     if (!haveEffect($effect`Cowrruption`)) {
@@ -677,9 +645,9 @@ function doWeaponTest() {
         );
     }
 
-    if (!haveEffect($effect`In a Lather`)) {
+    if (!haveEffect($effect`In a Lather`) && myMeat() >= 500) {
         useSkill($skill`The Ode to Booze`);
-        drink($item`Sockdollager`);
+        cliExecute('drink Sockdollager');
     }
 
     if (availableAmount($item`twinkly nuggets`) > 0) {
@@ -689,7 +657,7 @@ function doWeaponTest() {
     ensureEffect($effect`Carol of the Bulls`);
     ensureEffect($effect`Song of the North`);
     ensureEffect($effect`Rage of the Reindeer`);
-    // ensureEffect($effect`Frenzied, Bloody`);
+    ensureEffect($effect`Frenzied, Bloody`);
     ensureEffect($effect`Scowl of the Auk`);
     // ensureEffect($effect`Disdain of the War Snapper`);
     // ensureEffect($effect`Tenacity of the Snapper`);
@@ -701,8 +669,6 @@ function doWeaponTest() {
     if (have($item`Punching Potion`)) {
         ensurePotionEffect($effect`Feeling Punchy`, $item`Punching Potion`);
     }
-
-    cliExecute('boombox fists');
     if (!haveEffect($effect`Rictus of Yeg`)) {
         cliExecute('cargo pick 284');
         use($item`Yeg's Motel toothbrush`);
@@ -714,7 +680,8 @@ function doWeaponTest() {
         ensureEffect($effect`Weapon of Mass Destruction`);
     }
 
-    maximize('weapon damage, weapon damage percent -tie', false);
+    cliExecute('boombox fists');
+    cliExecute('fold broken champagne bottle');
 }
 
 function doSpellTest() {
@@ -732,23 +699,18 @@ function doSpellTest() {
 
     useSkill(1, $skill`Spirit of Cayenne`);
     ensureEffect($effect`Elemental Saucesphere`);
-    ensureEffect($effect`Astral Shell`);
+    // ensureEffect($effect`Astral Shell`);
     ensureEffect($effect`We're All Made of Starfish`);
     ensureEffect($effect`Simmering`);
     ensureEffect($effect`Song of Sauce`);
-    ensureEffect($effect`AAA-Charged`);
+    // ensureEffect($effect`AAA-Charged`);
     ensureEffect($effect`Carol of the Hells`);
     // ensureEffect($effect`Arched Eyebrow of the Archmage`);
     // ensureSong($effect`Jackasses' Symphony of Destruction`);
 
     ensureMeteorShowerAndCarolGhostEffect();
 
-    equip($item`weeping willow wand`);
-    equip($slot`acc1`, $item`Powerful Glove`);
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
-    availableAmount($item`psychic's amulet`) > 0 && equip($slot`acc3`, $item`psychic's amulet`);
-    maximize('spell damage -tie', false);
-
+    outfit('hccs_SPELL');
     if (Math.round(numericModifier('spell damage percent')) % 50 >= 40) {
         ensureItem(1, $item`soda water`);
         ensurePotionEffect($effect`Concentration`, $item`cordial of concentration`);
@@ -756,38 +718,29 @@ function doSpellTest() {
 }
 
 function doHotResTest() {
-    equip($slot`off-hand`, $item`Fourth of May Cosplay Saber`);
-    equip($slot`weapon`, toItem('industrial fire extinguisher'));
-    // Make sure no moon spoon.
-    equip($slot`acc1`, $item`Eight Days a Week Pill Keeper`);
-    equip($slot`acc2`, $item`Powerful Glove`);
-    equip($slot`acc3`, $item`Lil' Doctor™ bag`);
-
-    // eslint-disable-next-line libram/verify-constants
-    Macro.skill($skill`Fire Extinguisher: Foam Yourself`).skill($skill`Use the Force`).setAutoAttack();
-    adv1($location`Noob Cave`);
-    setAutoAttack(0);
-    if (!have($effect`Fireproof Foam Suit`)) throw `Error, not foamy enough`; // eslint-disable-line
+    if (!have($effect`Fireproof Foam Suit`)) { // eslint-disable-line
+        // Get Fireproof Foam Suit
+        Macro.skill($skill`Fire Extinguisher: Foam Yourself`) // eslint-disable-line
+            .skill($skill`Use the Force`).setAutoAttack();
+        equip($slot`weapon`, $item`industrial fire extinguisher`); // eslint-disable-line
+        equip($slot`off-hand`, $item`Fourth of May Cosplay Saber`);
+        adv1($location`Noob Cave`);
+        if (!have($effect`Fireproof Foam Suit`)) throw `Error, not foamy enough`; // eslint-disable-line
+    }
 
     ensureEffect($effect`Elemental Saucesphere`);
-    ensureEffect($effect`Astral Shell`);
+    // ensureEffect($effect`Astral Shell`);
     ensureEffect($effect`Blood Bond`);
     ensureEffect($effect`Leash of Linguini`);
-    ensureEffect($effect`Empathy`);
+    // ensureEffect($effect`Empathy`);
     ensureEffect($effect`Feeling Peaceful`);
-    // ensureEffect($effect`Hot-Headed`);
 
-    ensurePullEffect($effect`Fireproof Lips`, $item`SPF 451 lip balm`);
-
-    useFamiliar($familiar`Exotic Parrot`);
+    // ensurePullEffect($effect`Fireproof Lips`, $item`SPF 451 lip balm`);
+    ensureEffect($effect`Hot-Headed`);
+    use($item`pocket maze`);
+    ensureEffect($effect`Rainbowolin`);
 
     cliExecute('retrocape vampire hold');
-    equip($item`unwrapped knock-off retro superhero cape`);
-    availableAmount($item`psychic's amulet`) > 0 && equip($item`psychic's amulet`);
-    equip($slot`familiar`, $item`cracker`);
-
-    // Mafia sometimes can't figure out that multiple +weight things would get us to next tier.
-    maximize('hot res, 0.01 familiar weight -tie', false);
 }
 
 function doNonCombatTest() {
@@ -796,7 +749,7 @@ function doNonCombatTest() {
     if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
     ensureEffect($effect`Blood Bond`);
     ensureEffect($effect`Leash of Linguini`);
-    ensureEffect($effect`Empathy`);
+    // ensureEffect($effect`Empathy`);
 
     ensureEffect($effect`The Sonata of Sneakiness`);
     ensureEffect($effect`Smooth Movements`);
@@ -813,7 +766,7 @@ function doNonCombatTest() {
     equip($slot`acc2`, $item`hewn moon-rune spoon`);
 }
 
-const statDiff = (stat: Stat) => Math.floor(myBuffedstat(stat) - myBasestat(stat) / 30)
+const statDiff = (stat: Stat) => Math.floor((myBuffedstat(stat) - myBasestat(stat)) / 30)
 
 const tests: TestObject[] = [
     {
@@ -838,7 +791,7 @@ const tests: TestObject[] = [
         doTestPrep: doMoxTest
     }, {
         id: Test.ITEM,
-        spreadsheetTurns: 1,
+        spreadsheetTurns: 8, //1,
         getPredictedTurns: () => 60 - Math.floor(numericModifier('item drop') / 30 + 0.001) -
             Math.floor(numericModifier('booze drop') / 15 + 0.001),
         doTestPrep: doItemTest
@@ -849,7 +802,7 @@ const tests: TestObject[] = [
         doTestPrep: doHotResTest
     }, {
         id: Test.FAMILIAR,
-        spreadsheetTurns: 38,
+        spreadsheetTurns: 39,
         getPredictedTurns: () => 60 - Math.floor((familiarWeight(myFamiliar()) + weightAdjustment()) / 5),
         doTestPrep: doFamiliarTest
     }, {
@@ -860,13 +813,13 @@ const tests: TestObject[] = [
         doTestPrep: doWeaponTest
     }, {
         id: Test.SPELL,
-        spreadsheetTurns: 35,
+        spreadsheetTurns: 38, //35,
         getPredictedTurns: () => 60 - Math.floor(numericModifier('spell damage') / 50 + 0.001) -
             Math.floor(numericModifier('spell damage percent') / 50 + 0.001),
         doTestPrep: doSpellTest
     }, {
         id: Test.NONCOMBAT,
-        spreadsheetTurns: 1,
+        spreadsheetTurns: 3, //1,
         getPredictedTurns: () => 60 + (20 + numericModifier('combat rate')) * 3,
         doTestPrep: doNonCombatTest
     }, {
@@ -895,10 +848,7 @@ const printTime = () => {
 
 const endRunAndStartAftercore = () => {
     clickTestButton(Test.DONATE);
-
-    setProperty('autoSatisfyWithNPCs', getProperty('_saved_autoSatisfyWithNPCs'));
-    setProperty('autoSatisfyWithCoinmasters', getProperty('_saved_autoSatisfyWithCoinmasters'));
-    setProperty('hpAutoRecovery', '0.8');
+    set('hpAutoRecovery', .8);
 
     cliExecute('mood default');
     cliExecute('ccs default');
@@ -916,24 +866,23 @@ const endRunAndStartAftercore = () => {
         visitUrl('inv_use.php?whichitem=10254&doit=96&whichsign=7');
     }
 
-    putShop(180000, 0, 1, $item`blood-drive sticker`);
-    putShop(99000, 0, 1, $item`emergency margarita`);
-    putShop(94000, 0, 1, $item`vintage smart drink`);
-
-    // Create a key lime pie
-    const keyIndex = Math.floor(Math.random() * 3) + 1;
-    setChoice(1414, keyIndex);
-    create($items`Boris's key lime pie, Jarlsberg's key lime pie, Sneaky Pete's key lime pie`[keyIndex]);
+    $items`blood-drive sticker`.forEach((item) =>
+        putShop(shopPrice(item), 0, 1, item)
+    )
 
     cliExecute('hagnk all');
     cliExecute('acquire bitchin meatcar');
     buy($item`clockwork maid`, 1, 3500);
-    buy($item`pocket wish`, 1, 50000);
+    use($item`clockwork maid`);
     set('_hccsMinRealTime', false);
     visitUrl('peevpee.php?action=smashstone&confirm=on');
-    maximize('hp', false);
-    eat($item`magical sausage`);
-    useSkill($skill`Cannelloni Cocoon`);
+
+    // Create a key lime pie
+    const keyIndex = Math.floor(Math.random() * 3) + 1;
+    setChoice(1414, keyIndex);
+    useSkill($skill`Lock Picking`);
+    create($items`Boris's key lime pie, Jarlsberg's key lime pie, Sneaky Pete's key lime pie`[keyIndex - 1]);
+
     cliExecute('bb_login');
 }
 
