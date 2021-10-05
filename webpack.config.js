@@ -13,7 +13,7 @@ module.exports = {
   devtool: false,
   output: {
     // eslint-disable-next-line no-undef
-    path: path.resolve(__dirname, 'KoLmafia', 'scripts', 'bean-hccs'),
+    path: path.resolve(__dirname, 'KoLmafia', 'scripts', 'bb-hccs'),
     filename: '[name].js',
     libraryTarget: 'commonjs',
   },

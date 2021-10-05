@@ -1,17 +1,14 @@
-import { buy, cliExecute, visitUrl, print, use, pvpAttacksLeft } from 'kolmafia';
+import { availableAmount, cliExecute, pvpAttacksLeft, use } from 'kolmafia';
 import { $item } from 'libram';
 
-buy(1, $item`foreign language tapes`);
-buy(1, $item`continental juice bar`);
-buy(1, $item`ceiling fan`);
-
-use(1, $item`peppermint pip packet`);
-
-visitUrl('peevpee.php?action=smashstone&confirm=on');
-print('Stone smashed.');
-use(3, $item`meteorite-ade`);
+use(Math.min(3, availableAmount($item`Meteorite-Ade`)), $item`Meteorite-Ade`);
 use(1, $item`School of Hard Knocks Diploma`);
+use(1, $item`diabolic pizza cube`);
+
 if (pvpAttacksLeft() > 0) {
-  cliExecute('uberpvpoptimizer');
-  cliExecute('pvp fame battle');
+    cliExecute('uberpvpoptimizer');
+    cliExecute('pvp loot hot');
 }
+
+cliExecute('refresh inventory');
+cliExecute('philter');

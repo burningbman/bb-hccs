@@ -27,6 +27,7 @@ import {
     setProperty,
     shopAmount,
     storageAmount,
+    sweetSynthesis,
     takeShop,
     toEffect,
     toInt,
@@ -52,6 +53,14 @@ import {
     Macro,
     set,
 } from 'libram';
+
+const FUDGE = $item`Crimbo fudge`;
+const PECAN = $item`Crimbo candied pecan`;
+const BARK = $item`Crimbo peppermint bark`;
+const SUGAR_SHOTGUN = $item`sugar shotgun`;
+const SUGAR_SHANK = $item`sugar shank`;
+const SUGAR_SHORTS = $item`sugar shorts`;
+const SUGAR_SHIRT = $item`sugar shirt`;
 
 export function getPropertyInt(name: string): number {
     const str = getProperty(name);
@@ -346,7 +355,8 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
     if (
         have($effect`Holiday Yoked`) ||
         have($effect`Do You Crush What I Crush?`) ||
-        have($effect`Let It Snow/Boil/Stink/Frighten/Grease`)
+        have($effect`Let It Snow/Boil/Stink/Frighten/Grease` ||
+        have($effect`Crimbo Wrapping`))
     ) {
         // allow carol ghosting again if getting same effect and have a custom macro
         if (!have(effect) || !macro) {
@@ -373,7 +383,7 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
             break;
     }
 
-    if (get('_reflexHammerUsed') >= 3 && get('_chestXRayUsed') >= 3) {
+    if (get('_reflexHammerUsed') >= 3 && get('_chestXRayUsed') >= 3 && !macro) {
         throw 'No free-kill for Carol Ghost!';
     }
 
@@ -393,6 +403,49 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
 
     // hit an NC or something, try again
     if (!haveEffect(effect)) {
-        adventureWithCarolGhost(effect);
+        throw `Didn't get ${effect} while using Carol Ghost.`;
+    }
+}
+
+export function synthExp(): void {
+    if (have($effect`Synthesis: Learning`)) {
+        return;
+    }
+    if (availableAmount(FUDGE) >= 2) {
+        sweetSynthesis(FUDGE, FUDGE);
+    } else if (have(PECAN)) {
+        if (have(BARK)) {
+            sweetSynthesis(PECAN, BARK);
+        } else {
+            create(1, SUGAR_SHOTGUN);
+            sweetSynthesis(PECAN, SUGAR_SHOTGUN);
+        }
+    } else if (have(BARK)) {
+        create(1, SUGAR_SHANK);
+        sweetSynthesis(BARK, SUGAR_SHANK);
+    }
+    if (!have($effect`Synthesis: Learning`)) {
+        throw 'Couldn\'t get Synthesis: Learning';
+    }
+}
+
+export function synthItem(): void {
+    if (have($effect`Synthesis: Collection`)) {
+        return;
+    }
+    if (availableAmount(BARK) >= 2) {
+        sweetSynthesis(BARK, BARK);
+    } else if (have(BARK)) {
+        create(1, SUGAR_SHOTGUN);
+        sweetSynthesis(BARK, SUGAR_SHOTGUN);
+    } else if (have(FUDGE)) {
+        create(1, SUGAR_SHORTS);
+        sweetSynthesis(FUDGE, SUGAR_SHORTS);
+    } else if (have(PECAN)) {
+        create(1, SUGAR_SHIRT);
+        sweetSynthesis(PECAN, SUGAR_SHIRT);
+    }
+    if (!have($effect`Synthesis: Collection`)) {
+        throw 'Couldn\'t get Synthesis: Collection';
     }
 }
