@@ -4,6 +4,8 @@ import {
     availableAmount,
     buy,
     buyUsingStorage,
+    chatPrivate,
+    choiceFollowsFight,
     cliExecute,
     create,
     eat,
@@ -15,6 +17,7 @@ import {
     handlingChoice,
     haveEffect,
     haveSkill,
+    inMultiFight,
     myFamiliar,
     myMaxmp,
     myMp,
@@ -38,6 +41,7 @@ import {
     useFamiliar,
     useSkill,
     visitUrl,
+    wait,
     weightAdjustment,
 } from 'kolmafia';
 import {
@@ -51,6 +55,7 @@ import {
     get,
     have,
     Macro,
+    property,
     set,
 } from 'libram';
 
@@ -447,5 +452,40 @@ export function synthItem(): void {
     }
     if (!have($effect`Synthesis: Collection`)) {
         throw 'Couldn\'t get Synthesis: Collection';
+    }
+}
+
+export function multiFightAutoAttack(): void {
+    while (choiceFollowsFight() || inMultiFight()) {
+        visitUrl("choice.php");
+    }
+}
+
+export function useBestFamiliar(): void {
+    if (get('camelSpit') !== 100) {
+        useFamiliar($familiar`Melodramedary`);
+        equip($slot`familiar`, $item`miniature crystal ball`);
+    } else {
+        useFamiliar($familiar`Shorter-Order Cook`);
+    }
+}
+
+function checkFax(monster: Monster): boolean {
+    cliExecute("fax receive");
+    if (property.getString("photocopyMonster").toLowerCase() === monster.name.toLowerCase())
+        {return true;}
+    cliExecute("fax send");
+    return false;
+}
+
+export function fax(monster: Monster): void {
+    if (!get("_photocopyUsed")) {
+        if (checkFax(monster)) return;
+        chatPrivate("cheesefax", monster.name);
+        for (let i = 0; i < 3; i++) {
+            wait(5 + i);
+            if (checkFax(monster)) return;
+        }
+        abort(`Failed to acquire photocopied ${monster.name}.`);
     }
 }
