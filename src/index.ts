@@ -434,7 +434,7 @@ function godLob() {
 }
 
 function doFreeFights() {
-    if (have($item`wad of used tape`)) return;
+    if (have($item`wad of used tape`) || myLevel() === 15) return;
 
     cliExecute('retrocape mysticality hold');
 
@@ -568,14 +568,13 @@ function doFreeFights() {
         .trySkill($skill`Chest X-Ray`).setAutoAttack();
 
     // Free kills in NEP
-    while (get('shatteringPunchUsed') < 3 ||
+    while (get('_shatteringPunchUsed') < 3 ||
         !get('_gingerbreadMobHitUsed') ||
         get('_chestXRayUsed') < 3
     ) {
         useBestFamiliar();
         upkeepHpAndMp();
         adv1($location`The Neverending Party`);
-        print(`Punches: ${get('shatteringPunchUsed')} Mob Hit: ${get('_gingerbreadMobHitUsed')} X-Ray: ${get('_chestXRayUsed')}`);
     }
 
     cliExecute('fold wad of used tape'); // for stat and item tests
