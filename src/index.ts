@@ -118,6 +118,14 @@ interface TestObject {
 
 const CONTEXT: { updateOutfits: boolean } = { updateOutfits: false };
 
+function setBoomBox() {
+    if (have($item`Punching Potion`)) {
+        cliExecute('boombox meat');
+    } else {
+        cliExecute('boombox fists');
+    }
+}
+
 function ensureMeteorShowerAndCarolGhostEffect() {
     if (!haveEffect($effect`Do You Crush What I Crush?`) || !haveEffect($effect`Meteor Showered`)) {
         equip($item`Fourth of May Cosplay Saber`);
@@ -281,7 +289,6 @@ function setup() {
     cliExecute('ccs bb-hccs');
     cliExecute('backupcamera reverser on');
     cliExecute('backupcamera ml');
-    cliExecute('boombox fists');
     cliExecute('mcd 10');
     cliExecute('retrocape mysticality hold');
     cliExecute('fold makeshift garbage shirt');
@@ -308,6 +315,7 @@ function setup() {
     }
 
     getBatteries();
+    setBoomBox();
 
     useSkill($skill`Summon Crimbo Candy`);
     useSkill($skill`Summon Sugar Sheets`, 3);
@@ -322,6 +330,8 @@ function setup() {
 
 function getPizzaIngredients() {
     if (have($item`cherry`) || myLevel() > 1) return;
+
+    setBoomBox();
 
     // Put on some regen gear
     outfit('hccs_pizza');
@@ -411,6 +421,7 @@ function buffBeforeGoblins() {
 }
 
 function fightGodLob() {
+    setBoomBox();
     upkeepHp();
     visitUrl("main.php?fightgodlobster=1");
     runCombat();
@@ -472,8 +483,6 @@ function doFreeFights() {
         adv1($location`Your Mushroom Garden`);
     }
 
-    cliExecute('boombox meat');
-
     // Neverending Party
     if (get('_questPartyFair') === 'unstarted') {
         setChoice(1322, 0);
@@ -499,6 +508,7 @@ function doFreeFights() {
         .skill($skill`Saucestorm`).setAutoAttack();
 
     while (get('_neverendingPartyFreeTurns') < 10) {
+        setBoomBox();
         upkeepHp();
         adv1($location`The Neverending Party`);
         if (get('lastEncounter').includes('Gone Kitchin') || get('lastEncounter').includes('Forward to the Back')) {
