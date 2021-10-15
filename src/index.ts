@@ -117,14 +117,7 @@ interface TestObject {
 }
 
 const CONTEXT: { updateOutfits: boolean } = { updateOutfits: false };
-
-function setBoomBox() {
-    if (have($item`Punching Potion`)) {
-        cliExecute('boombox meat');
-    } else {
-        cliExecute('boombox fists');
-    }
-}
+const GOD_LOB_MACRO = Macro.skill($skill`Curse of Weaksauce`).skill($skill`Saucestorm`).repeat();
 
 function ensureMeteorShowerAndCarolGhostEffect() {
     if (!haveEffect($effect`Do You Crush What I Crush?`) || !haveEffect($effect`Meteor Showered`)) {
@@ -292,6 +285,7 @@ function setup() {
     cliExecute('mcd 10');
     cliExecute('retrocape mysticality hold');
     cliExecute('fold makeshift garbage shirt');
+    cliExecute('boombox meat');
 
     setChoice(1340, 3); // Turn off Lil' Doctor quests.
     setChoice(1387, 3); // set saber to drop items
@@ -315,7 +309,6 @@ function setup() {
     }
 
     getBatteries();
-    setBoomBox();
 
     useSkill($skill`Summon Crimbo Candy`);
     useSkill($skill`Summon Sugar Sheets`, 3);
@@ -326,12 +319,11 @@ function setup() {
     // use($item`seal tooth`);
     // use($item`volleyball`);
     pullIfPossible(1, $item`cracker`, 2000);
+    pullIfPossible(1, $item`dromedary drinking helmet`, 2000);
 }
 
 function getPizzaIngredients() {
     if (have($item`cherry`) || myLevel() > 1) return;
-
-    setBoomBox();
 
     // Put on some regen gear
     outfit('hccs_pizza');
@@ -396,10 +388,6 @@ function buffBeforeGoblins() {
     ensurePotionEffect($effect`Tomato Power`, $item`tomato juice of powerful power`);
     ensurePotionEffect($effect`Mystically Oiled`, $item`ointment of the occult`);
 
-    [$item`tomato juice of powerful power`, $item`ointment of the occult`].forEach((item) =>
-        autosell(availableAmount(item), item)
-    )
-
     ensureEffect($effect`Favored by Lyle`);
     ensureEffect($effect`Starry-Eyed`);
     ensureEffect($effect`Triple-Sized`);
@@ -407,7 +395,7 @@ function buffBeforeGoblins() {
     ensureEffect($effect`Uncucumbered`); // boxing daycare
     ensureSong($effect`The Magical Mojomuscular Melody`);
     ensureEffect($effect`Hulkien`);
-    ensureEffect($effect`Lapdog`);
+    ensureEffect($effect`We're All Made of Starfish`);
 
     // Plan is for these buffs to fall all the way through to item -> hot res -> fam weight.
     ensureEffect($effect`Fidoxene`);
@@ -421,7 +409,6 @@ function buffBeforeGoblins() {
 }
 
 function fightGodLob() {
-    setBoomBox();
     upkeepHp();
     visitUrl("main.php?fightgodlobster=1");
     runCombat();
@@ -435,7 +422,7 @@ function godLob() {
         equip($item`familiar scrapbook`); // don't try to find kramco here
 
         useFamiliar($familiar`God Lobster`);
-        Macro.skill($skill`Curse of Weaksauce`).skill($skill`Saucestorm`).repeat().setAutoAttack();
+        GOD_LOB_MACRO.setAutoAttack();
         setChoice(1310, 1);
         fightGodLob();
         equip($slot`familiar`, $item`God Lobster's Scepter`);
@@ -452,6 +439,7 @@ function doFreeFights() {
     upkeepHp();
 
     ensureEffect($effect`Blessing of your favorite Bird`); // Should be 75% myst for now.
+    ensureEffect($effect`Confidence of the Votive`); // PM candle
     ensureEffect($effect`Song of Bravado`);
     ensureSong($effect`Polka of Plenty`);
     ensureEffect($effect`Big`);
@@ -468,6 +456,10 @@ function doFreeFights() {
         ensureEffect($effect`Stevedave's Shanty of Superiority`);
     ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
     ensureEffect($effect`Feeling Excited`);
+
+    if (userConfirm('Stop to check free fight buffs?')) {
+        throw ('Checking free fight buffs');
+    }
 
     godLob();
     useBestFamiliar();
@@ -508,7 +500,6 @@ function doFreeFights() {
         .skill($skill`Saucestorm`).setAutoAttack();
 
     while (get('_neverendingPartyFreeTurns') < 10) {
-        setBoomBox();
         upkeepHp();
         adv1($location`The Neverending Party`);
         if (get('lastEncounter').includes('Gone Kitchin') || get('lastEncounter').includes('Forward to the Back')) {
@@ -599,8 +590,7 @@ function doMoxTest() {
     if (myClass() === $class`Pastamancer`) useSkill(1, $skill`Bind Penne Dreadful`);
     else ensurePotionEffect($effect`Expert Oiliness`, $item`oil of expertise`);
 
-    // Sauceror has 75% moxie bird
-    ensureEffect($effect`Blessing of the Bird`);
+    ensureEffect($effect`Blessing of the Bird`); // SA/PM have moxie bird
     ensureEffect($effect`Big`);
     ensureEffect($effect`Song of Bravado`);
     // ensureSong($effect`Stevedave's Shanty of Superiority`);
@@ -651,9 +641,10 @@ function doItemTest() {
     ensureEffect($effect`Fat Leon's Phat Loot Lyric`);
     ensureEffect($effect`The Spirit of Taking`);
     ensureEffect($effect`Steely-Eyed Squint`);
-    ensureEffect($effect`Blessing of the Bird`);
-    // ensureEffect($effect`Nearly All-Natural`); // bag of grain
-    ensureEffect($effect`El Aroma de Salsa`); // Salsa Caliente™ candle
+    ensureEffect($effect`Nearly All-Natural`); // bag of grain
+
+    // ensureEffect($effect`Blessing of the Bird`);
+    // ensureEffect($effect`El Aroma de Salsa`); // Salsa Caliente™ candle
 }
 
 function doFamiliarTest() {
@@ -692,19 +683,6 @@ function doWeaponTest() {
     ensureMeteorShowerAndCarolGhostEffect();
     ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
 
-    // OU pizza (pulverize sweatpants for useless powder)
-    if (!haveEffect($effect`Outer Wolf™`)) {
-        ensureItem(1, $item`tenderizing hammer`);
-        !have($item`useless powder`) && cliExecute('pulverize old sweatpants');
-        const numBooze = availableAmount($item`Middle of the Road™ brand whiskey`);
-        eatPizza(
-            $item`oil of expertise`,
-            $item`useless powder`,
-            numBooze >= 1 ? $item`Middle of the Road™ brand whiskey` : $item`mushroom filet`,
-            numBooze >= 2 ? $item`Middle of the Road™ brand whiskey` : $item`mushroom filet`
-        );
-    }
-
     if (availableAmount($item`twinkly nuggets`) > 0) {
         ensureEffect($effect`Twinkly Weapon`);
     }
@@ -720,10 +698,8 @@ function doWeaponTest() {
     ensureEffect($effect`Billiards Belligerence`);
     ensureEffect($effect`Lack of Body-Building`);
     ensureEffect($effect`Bow-Legged Swagger`);
+    ensureEffect($effect`Blessing of your favorite Bird`); // PM has 100% weapon damage
 
-    if (have($item`Punching Potion`)) {
-        ensurePotionEffect($effect`Feeling Punchy`, $item`Punching Potion`);
-    }
     if (!haveEffect($effect`Rictus of Yeg`)) {
         cliExecute('cargo pick 284');
         use($item`Yeg's Motel toothbrush`);
@@ -801,36 +777,43 @@ function doHotResTest() {
     ensureEffect($effect`Leash of Linguini`);
     ensureEffect($effect`Empathy`);
     ensureEffect($effect`Feeling Peaceful`);
-
-    // ensurePullEffect($effect`Fireproof Lips`, $item`SPF 451 lip balm`);
     ensureEffect($effect`Hot-Headed`);
-    // use($item`pocket maze`);
-    // ensureEffect($effect`Rainbowolin`);
 
     cliExecute('retrocape vampire hold');
 }
 
 function doNonCombatTest() {
-    useFamiliar($familiar`Disgeist`);
-
     if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
+
     ensureEffect($effect`Blood Bond`);
     ensureEffect($effect`Leash of Linguini`);
     ensureEffect($effect`Empathy`);
-
     ensureEffect($effect`The Sonata of Sneakiness`);
     ensureEffect($effect`Smooth Movements`);
-    if (get('_powerfulGloveBatteryPowerUsed') <= 95) ensureEffect($effect`Invisible Avatar`);
+    ensureEffect($effect`Invisible Avatar`);
     ensureEffect($effect`Feeling Lonely`);
     ensureEffect($effect`A Rose by Any Other Material`);
     ensureEffect($effect`Throwing Some Shade`);
+    ensureEffect($effect`Silent Running`);
+    ensureEffect($effect`Blessing of the Bird`); // PM has 7% NC bird
 
-    wishEffect($effect`Disquiet Riot`);
+    if (get("_godLobsterFights") < 3 && have($item`God Lobster's Ring`)) {
+        upkeepHpAndMp();
+        useFamiliar($familiar`God Lobster`);
+        equip($slot`familiar`, $item`God Lobster's Ring`);
+        setChoice(1310, 2);
+        GOD_LOB_MACRO.setAutoAttack();
+        visitUrl("main.php?fightgodlobster=1");
+        runCombat();
+        visitUrl("choice.php");
+        runChoice(-1);
+    } else if (!have($effect`Silence of the God Lobster`)) {
+        throw ('Not ready for god lob NC buff');
+    }
 
-    // cliExecute('acquire porkpie-mounted popper');
-    // equip($item`porkpie-mounted popper`);
-    equip($item`fish hatchet`);
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
+    useFamiliar($familiar`Disgeist`);
+
+    cliExecute('acquire porkpie-mounted popper');
 }
 
 const statDiff = (stat: Stat) => Math.floor((myBuffedstat(stat) - myBasestat(stat)) / 30)
@@ -862,7 +845,7 @@ const tests: TestObject[] = [
         maximizer: 'moxie'
     }, {
         id: Test.ITEM,
-        spreadsheetTurns: 8, //1,
+        spreadsheetTurns: 1,
         getPredictedTurns: () => 60 - Math.floor(numericModifier('item drop') / 30 + 0.001) -
             Math.floor(numericModifier('booze drop') / 15 + 0.001),
         doTestPrep: doItemTest,
@@ -875,27 +858,27 @@ const tests: TestObject[] = [
         maximizer: 'hot res, 0.01 familiar weight'
     }, {
         id: Test.FAMILIAR,
-        spreadsheetTurns: 39,
+        spreadsheetTurns: 37,
         getPredictedTurns: () => 60 - Math.floor((familiarWeight(myFamiliar()) + weightAdjustment()) / 5),
         doTestPrep: doFamiliarTest,
         maximizer: 'familiar weight'
     }, {
         id: Test.WEAPON,
-        spreadsheetTurns: 2,
+        spreadsheetTurns: 1,
         getPredictedTurns: () => 60 - Math.floor(numericModifier('weapon damage') / 25 + 0.001) -
             Math.floor(numericModifier('weapon damage percent') / 25 + 0.001),
         doTestPrep: doWeaponTest,
         maximizer: 'weapon damage, weapon damage percent'
     }, {
         id: Test.SPELL,
-        spreadsheetTurns: 38, //35,
+        spreadsheetTurns: 33,
         getPredictedTurns: () => 60 - Math.floor(numericModifier('spell damage') / 50 + 0.001) -
             Math.floor(numericModifier('spell damage percent') / 50 + 0.001),
         doTestPrep: doSpellTest,
         maximizer: 'spell damage, spell damage percent'
     }, {
         id: Test.NONCOMBAT,
-        spreadsheetTurns: 3, //1,
+        spreadsheetTurns: 1,
         getPredictedTurns: () => 60 + (20 + numericModifier('combat rate')) * 3,
         doTestPrep: doNonCombatTest,
         maximizer: '-combat, 0.01 familiar weight'

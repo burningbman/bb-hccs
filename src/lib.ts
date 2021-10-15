@@ -464,7 +464,7 @@ export function multiFightAutoAttack(): void {
 export function useBestFamiliar(): void {
     if (get('camelSpit') !== 100) {
         useFamiliar($familiar`Melodramedary`);
-        equip($slot`familiar`, $item`miniature crystal ball`);
+        equip($slot`familiar`, $item`dromedary drinking helmet`);
     } else {
         useFamiliar($familiar`Shorter-Order Cook`);
     }
