@@ -432,7 +432,7 @@ function godLob() {
 }
 
 function doFreeFights() {
-    if (get('_chestXRayUsed') < 3) return;
+    if (get('_chestXRayUsed') >= 3) return;
 
     cliExecute('retrocape mysticality hold');
 
