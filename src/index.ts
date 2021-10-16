@@ -201,7 +201,7 @@ function runTest(testId: Test) {
                     }
                 }
 
-                while (predictedTurns > myAdventures()) {
+                while (Math.max(1, predictedTurns) > myAdventures()) {
                     eat(1, $item`magical sausage`);
                 }
 
@@ -665,6 +665,8 @@ function doFamiliarTest() {
 }
 
 function doWeaponTest() {
+    ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
+
     if (!haveEffect($effect`Cowrruption`)) {
         if (get('camelSpit') >= 100) useFamiliar($familiar`Melodramedary`);
         Macro.trySkill($skill`%fn, spit on me!`)
@@ -677,7 +679,6 @@ function doWeaponTest() {
     }
 
     ensureMeteorShowerAndCarolGhostEffect();
-    ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
 
     if (availableAmount($item`twinkly nuggets`) > 0) {
         ensureEffect($effect`Twinkly Weapon`);
@@ -694,7 +695,7 @@ function doWeaponTest() {
     ensureEffect($effect`Billiards Belligerence`);
     ensureEffect($effect`Lack of Body-Building`);
     ensureEffect($effect`Bow-Legged Swagger`);
-    ensureEffect($effect`Blessing of your favorite Bird`); // PM has 100% weapon damage
+    ensureEffect($effect`Blessing of the Bird`); // PM has 100% weapon damage
 
     if (!haveEffect($effect`Rictus of Yeg`)) {
         cliExecute('cargo pick 284');
