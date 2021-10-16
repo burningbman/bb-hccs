@@ -432,7 +432,7 @@ function godLob() {
 }
 
 function doFreeFights() {
-    if (have($item`wad of used tape`) || myLevel() === 15) return;
+    if (have($item`wad of used tape`) || myLevel() >= 15) return;
 
     cliExecute('retrocape mysticality hold');
 
