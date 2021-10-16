@@ -457,10 +457,6 @@ function doFreeFights() {
     ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
     ensureEffect($effect`Feeling Excited`);
 
-    if (userConfirm('Stop to check free fight buffs?')) {
-        throw ('Checking free fight buffs');
-    }
-
     godLob();
     useBestFamiliar();
     outfit('hccs_freefights');
