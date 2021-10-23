@@ -127,6 +127,9 @@ function ensureMeteorShowerAndCarolGhostEffect() {
             .skill($skill`Use the Force`)
         );
         if (handlingChoice()) runChoice(3);
+        if (!have($effect`Meteor Showered`)) {
+            throw 'Did not get Meteor Showered';
+        }
     }
 }
 
@@ -347,6 +350,11 @@ function getPizzaIngredients() {
     }
     adv1($location`The Skeleton Store`);
     mapAndSaberMonster($location`The Skeleton Store`, $monster`novelty tropical skeleton`);
+
+    // sell all but grapefruit and cherry in order to afford dramatic range
+    autosell($item`strawberry`, availableAmount($item`strawberry`));
+    autosell($item`orange`, availableAmount($item`orange`));
+    autosell($item`lemon`, availableAmount($item`lemon`));
 }
 
 function useStatGains() {
@@ -438,7 +446,7 @@ function doFreeFights() {
 
     upkeepHp();
 
-    ensureEffect($effect`Blessing of your favorite Bird`); // Should be 75% myst for now.
+    ensureEffect($effect`Blessing of your favorite Bird`); // 75% myst
     ensureEffect($effect`Confidence of the Votive`); // PM candle
     ensureEffect($effect`Song of Bravado`);
     ensureSong($effect`Polka of Plenty`);
@@ -896,7 +904,7 @@ const printTime = () => {
     print(`That only took ${min}:${sec.toFixed(2)} and ${myTurncount()} turns!`, 'green');
     print(`Organ use: ${myFullness()}/${myInebriety()}/${mySpleenUse()}`, 'green');
     for (let i = 1; i <= 10; i++) {
-        const spreadsheetTurns = tests.find((test) => test.id === i) ?.spreadsheetTurns || 60;
+        const spreadsheetTurns = tests.find((test) => test.id === i)?.spreadsheetTurns || 60;
         print(
             `Test ${Test[i].padEnd(9)} estimated: ${get(`_hccsTestExpected${i}`).toString().padStart(2)} actual: ${get(`_hccsTestActual${i}`).toString().padStart(2)} spreadsheet: ${spreadsheetTurns.toString().padStart(2)}`,
             'blue'
