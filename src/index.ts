@@ -388,6 +388,11 @@ function buffBeforeGoblins() {
 
     // craft potions after eating to ensure we have adventures
     if (!get('hasRange')) {
+        if (myMeat() < 950) {
+            useSkill($skill`Prevent Scurvy and Sobriety`);
+            autosell($item`bottle of rum`, 3);
+            autosell($item`grapefruit`, availableAmount($item`grapefruit`) - 1);
+        }
         ensureItem(1, $item`Dramatic™ range`);
         use(1, $item`Dramatic™ range`);
     }
@@ -455,13 +460,11 @@ function doFreeFights() {
     ensureEffect($effect`Blood Bubble`);
     ensureEffect($effect`Drescher's Annoying Noise`);
     ensureEffect($effect`Elemental Saucesphere`);
-    // ensureEffect($effect`Empathy`);
     ensureEffect($effect`Inscrutable Gaze`);
     ensureEffect($effect`Leash of Linguini`);
     ensureEffect($effect`Pride of the Puffin`);
     ensureEffect($effect`Singer's Faithful Ocelot`);
-    haveSkill($skill`Stevedave's Shanty of Superiority`) &&
-        ensureEffect($effect`Stevedave's Shanty of Superiority`);
+    ensureEffect($effect`Stevedave's Shanty of Superiority`);
     ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
     ensureEffect($effect`Feeling Excited`);
 
@@ -505,6 +508,7 @@ function doFreeFights() {
 
     while (get('_neverendingPartyFreeTurns') < 10) {
         upkeepHp();
+        useBestFamiliar();
         adv1($location`The Neverending Party`);
         if (get('lastEncounter').includes('Gone Kitchin') || get('lastEncounter').includes('Forward to the Back')) {
             setChoice(1324, 5);
@@ -525,6 +529,10 @@ function doFreeFights() {
             .skill($skill`Saucestorm`).setAutoAttack();
         adv1($location`Noob Cave`);
 
+        if (get('lastCopyableMonster') !== $monster`sausage goblin`) {
+            throw('Sausage not setup for back-ups and kramco');
+        }
+
         // back-up sausages in Noob Cave
         Macro.if_('!monstername "sausage goblin"', new Macro().skill($skill`Back-Up to your Last Enemy`))
             .if_('!monstername "sausage goblin"', new Macro().step('abort'))
@@ -536,6 +544,7 @@ function doFreeFights() {
 
         while (get('_backUpUses') < 10) {
             upkeepHp();
+            useBestFamiliar();
             adv1($location`Noob Cave`, -1, '');
         }
 
@@ -543,6 +552,9 @@ function doFreeFights() {
     }
 
     if (get('_pocketProfessorLectures') === 0) {
+        ensureEffect($effect`Empathy`);
+        maximize('familiar weight -tie', false);
+
         // need 2 adventures to lecture on relativity
         if (myAdventures() < 2) eat(1, $item`magical sausage`);
 
@@ -697,9 +709,9 @@ function doWeaponTest() {
     ensureEffect($effect`Rage of the Reindeer`);
     ensureEffect($effect`Frenzied, Bloody`);
     ensureEffect($effect`Scowl of the Auk`);
-    // ensureEffect($effect`Disdain of the War Snapper`);
-    // ensureEffect($effect`Tenacity of the Snapper`);
-    // ensureSong($effect`Jackasses' Symphony of Destruction`);
+    ensureEffect($effect`Disdain of the War Snapper`);
+    ensureEffect($effect`Tenacity of the Snapper`);
+    ensureSong($effect`Jackasses' Symphony of Destruction`);
     ensureEffect($effect`Billiards Belligerence`);
     ensureEffect($effect`Lack of Body-Building`);
     ensureEffect($effect`Bow-Legged Swagger`);
@@ -736,7 +748,7 @@ function doSpellTest() {
     ensureEffect($effect`AAA-Charged`);
     ensureEffect($effect`Carol of the Hells`);
     // ensureEffect($effect`Arched Eyebrow of the Archmage`);
-    // ensureSong($effect`Jackasses' Symphony of Destruction`);
+    ensureSong($effect`Jackasses' Symphony of Destruction`);
 
     ensureMeteorShowerAndCarolGhostEffect();
 

@@ -7,7 +7,7 @@ use(1, $item`diabolic pizza cube`);
 
 if (pvpAttacksLeft() > 0) {
     cliExecute('uberpvpoptimizer');
-    cliExecute('pvp loot hot');
+    cliExecute('pvp loot fashion');
 }
 
 cliExecute('refresh inventory');
