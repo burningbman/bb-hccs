@@ -406,7 +406,6 @@ function buffBeforeGoblins() {
     ensureEffect($effect`Triple-Sized`);
     ensureEffect($effect`Feeling Excited`);
     ensureEffect($effect`Uncucumbered`); // boxing daycare
-    ensureSong($effect`The Magical Mojomuscular Melody`);
     ensureEffect($effect`Hulkien`);
     ensureEffect($effect`We're All Made of Starfish`);
 
@@ -553,7 +552,7 @@ function doFreeFights() {
 
     if (get('_pocketProfessorLectures') === 0) {
         ensureEffect($effect`Empathy`);
-        maximize('familiar weight -tie', false);
+        maximize('familiar weight -tie +equip backup camera +equip makeshift garbage shirt', false);
 
         // need 2 adventures to lecture on relativity
         if (myAdventures() < 2) eat(1, $item`magical sausage`);
