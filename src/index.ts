@@ -12,6 +12,7 @@ import {
   equippedItem,
   familiarWeight,
   gametimeToInt,
+  getClanName,
   getProperty,
   handlingChoice,
   haveEffect,
@@ -111,7 +112,7 @@ interface TestObject {
 }
 
 const CONTEXT: { updateOutfits: boolean } = { updateOutfits: false };
-const GOD_LOB_MACRO = Macro.skill($skill`Curse of Weaksauce`)
+const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
   .trySkill($skill`Barrage of Tears`)
   .trySkill($skill`Beach Combo`)
   .trySkill($skill`Spittoon Monsoon`)
@@ -258,11 +259,15 @@ function setup() {
   set('hpAutoRecovery', 0.8);
 
   // reset actual counts for validation
-  for (const test in Test) {
-    set(`_hccsTestActual${Test[test]}`, -1);
+  for (const i of Object.keys(Test)) {
+    set(`_hccsTestActual${i}`, -1);
   }
 
-  setClan('Bonus Adventures from Hell');
+  try {
+    setClan('Bonus Adventures from Hell');
+  } catch (e) {
+    //if (getClanName() !== 'Bonus Adventures from Hell') throw 'clan';
+  }
 
   use($item`Bird-a-Day calendar`);
 
@@ -280,7 +285,6 @@ function setup() {
   visitUrl('shop.php?whichshop=lathe&action=buyitem&quantity=1&whichrow=1162&pwd'); // lathe wand
 
   ensureItem(1, $item`toy accordion`);
-  cliExecute('acquire bitchin meatcar');
   // ensureSewerItem(1, $item`turtle totem`);
   ensureSewerItem(1, $item`saucepan`);
 
@@ -699,6 +703,8 @@ function doFamiliarTest() {
     adv1($location`The Dire Warren`);
     if (handlingChoice()) runChoice(3);
   }
+
+  equip($slot`weapon`, $item`none`); // unequip saber for outfit reasons
 }
 
 function doWeaponTest() {
@@ -764,7 +770,7 @@ function doSpellTest() {
   ensureEffect($effect`Song of Sauce`);
   ensureEffect($effect`AAA-Charged`);
   ensureEffect($effect`Carol of the Hells`);
-  // ensureEffect($effect`Arched Eyebrow of the Archmage`);
+  //ensureEffect($effect`Arched Eyebrow of the Archmage`);
   ensureSong($effect`Jackasses' Symphony of Destruction`);
 
   ensureMeteorShowerAndCarolGhostEffect();
@@ -803,6 +809,7 @@ function doHotResTest() {
       visitUrl('inv_use.php?whichitem=10254&doit=96&whichsign=8');
     }
 
+    ensureItem(1, $item`Desert Bus pass`);
     ensureItem(1, $item`lime-and-chile-flavored chewing gum`);
     sweetSynthesis($item`Chubby and Plump bar`, $item`lime-and-chile-flavored chewing gum`);
   }
@@ -992,8 +999,6 @@ const endRunAndStartAftercore = () => {
   create(
     $items`Boris's key lime pie, Jarlsberg's key lime pie, Sneaky Pete's key lime pie`[keyIndex - 1]
   );
-
-  use($item`warbear induction oven`); // for cooking spooky pockets
 
   cliExecute('bb_login');
 
