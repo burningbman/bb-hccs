@@ -42,6 +42,8 @@ import {
   runCombat,
   setAutoAttack,
   sweetSynthesis,
+  toEffect,
+  toItem,
   use,
   useFamiliar,
   userConfirm,
@@ -60,6 +62,7 @@ import {
   $skill,
   $slot,
   $stat,
+  adventureMacro,
   get,
   have,
   Macro,
@@ -116,16 +119,25 @@ const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
   .trySkill($skill`Barrage of Tears`)
   .trySkill($skill`Beach Combo`)
   .trySkill($skill`Spittoon Monsoon`)
+  // eslint-disable-next-line libram/verify-constants
+  .trySkill($skill`Bowl Straight Up`)
   .skill($skill`Saucestorm`)
   .repeat();
 
 function ensureMeteorShowerAndCarolGhostEffect() {
-  if (!haveEffect($effect`Do You Crush What I Crush?`) || !haveEffect($effect`Meteor Showered`)) {
-    equip($item`Fourth of May Cosplay Saber`);
-    adventureWithCarolGhost(
-      $effect`Do You Crush What I Crush?`,
-      Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
-    );
+  equip($item`Fourth of May Cosplay Saber`);
+  if (!haveEffect($effect`Meteor Showered`)) {
+    if (!haveEffect($effect`Do You Crush What I Crush?`)) {
+      adventureWithCarolGhost(
+        $effect`Do You Crush What I Crush?`,
+        Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
+      );
+    } else {
+      adventureMacro(
+        $location`The Dire Warren`,
+        Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
+      );
+    }
     if (handlingChoice()) runChoice(3);
     if (!have($effect`Meteor Showered`)) {
       throw 'Did not get Meteor Showered';
@@ -155,6 +167,8 @@ function doGuaranteedGoblin() {
     const offHand = equippedItem($slot`off-hand`);
     equip($item`Kramco Sausage-o-Matic™`);
     Macro.if_('!monstername "sausage goblin"', new Macro().step('abort'))
+      // eslint-disable-next-line libram/verify-constants
+      .trySkill($skill`Bowl Straight Up`)
       .trySkill($skill`Barrage of Tears`)
       .trySkill($skill`Spittoon Monsoon`)
       .trySkill($skill`Beach Combo`)
@@ -250,6 +264,13 @@ const ensureDeepDarkVisions = () => {
   useSkill(1, $skill`Deep Dark Visions`);
 };
 
+function vote() {
+  if (!get('_voteToday')) {
+    visitUrl('place.php?whichplace=town_right&action=townright_vote');
+    visitUrl('choice.php?option=1&whichchoice=1331&g=2&local%5B%5D=2&local%5B%5D=3');
+  }
+}
+
 function setup() {
   if (availableAmount($item`cracker`) > 0 || myLevel() > 1) return;
 
@@ -284,6 +305,8 @@ function setup() {
   visitUrl('clan_viplounge.php?action=lookingglass&whichfloor=2'); // get DRINK ME potion
   visitUrl('shop.php?whichshop=lathe&action=buyitem&quantity=1&whichrow=1162&pwd'); // lathe wand
 
+  vote();
+
   ensureItem(1, $item`toy accordion`);
   // ensureSewerItem(1, $item`turtle totem`);
   ensureSewerItem(1, $item`saucepan`);
@@ -296,6 +319,7 @@ function setup() {
   cliExecute('retrocape mysticality hold');
   cliExecute('fold makeshift garbage shirt');
   cliExecute('boombox meat');
+  cliExecute('pantogram mysticality|hot|drops of blood|some self-respect|your hopes|silent');
 
   setChoice(1340, 3); // Turn off Lil' Doctor quests.
   setChoice(1387, 3); // set saber to drop items
@@ -453,7 +477,7 @@ function godLob() {
 }
 
 function doFreeFights() {
-  if (get('_chestXRayUsed') >= 3) return;
+  if (get('_chestXRayUsed') >= 3 || myLevel() >= 15) return;
 
   cliExecute('retrocape mysticality hold');
 
@@ -509,6 +533,8 @@ function doFreeFights() {
   }
 
   Macro.trySkill($skill`Feel Pride`)
+    // eslint-disable-next-line libram/verify-constants
+    .trySkill($skill`Bowl Straight Up`)
     .skill($skill`Barrage of Tears`)
     .skill($skill`Sing Along`)
     .skill($skill`Spittoon Monsoon`)
@@ -535,6 +561,8 @@ function doFreeFights() {
     upkeepHp();
     equip($item`Kramco Sausage-o-Matic™`);
     Macro.if_('!monstername "sausage goblin"', new Macro().step('abort'))
+      // eslint-disable-next-line libram/verify-constants
+      .trySkill($skill`Bowl Straight Up`)
       .skill($skill`Barrage of Tears`)
       .skill($skill`Spittoon Monsoon`)
       .skill($skill`Sing Along`)
@@ -553,6 +581,8 @@ function doFreeFights() {
     )
       .if_('!monstername "sausage goblin"', new Macro().step('abort'))
       .trySkill($skill`Feel Pride`)
+      // eslint-disable-next-line libram/verify-constants
+      .trySkill($skill`Bowl Straight Up`)
       .skill($skill`Barrage of Tears`)
       .skill($skill`Sing Along`)
       .skill($skill`Spittoon Monsoon`)
@@ -597,6 +627,8 @@ function doFreeFights() {
 
   equip($slot`acc2`, $item`Lil' Doctor™ bag`);
   Macro.if_('monstername "sausage goblin"', new Macro().skill($skill`Saucegeyser`).repeat())
+    // eslint-disable-next-line libram/verify-constants
+    .trySkill($skill`Bowl Straight Up`)
     .trySkill($skill`Shattering Punch`)
     .trySkill($skill`Gingerbread Mob Hit`)
     .trySkill($skill`Chest X-Ray`)
@@ -651,10 +683,10 @@ function doMusTest() {
   ensureEffect($effect`Song of Bravado`);
   ensureEffect($effect`Rage of the Reindeer`);
   ensureEffect($effect`Lack of Body-Building`);
-  // ensureSong($effect`Stevedave's Shanty of Superiority`);
+  ensureSong($effect`Stevedave's Shanty of Superiority`);
   // ensureSong($effect`Power Ballad of the Arrowsmith`);
   // ensureEffect($effect`Quiet Determination`);
-  // ensureEffect($effect`Disdain of the War Snapper`);
+  ensureEffect($effect`Disdain of the War Snapper`);
   cliExecute('retrocape muscle');
 }
 
@@ -663,7 +695,11 @@ function doItemTest() {
 
   // cyclops eyedrops
   if (!haveEffect($effect`One Very Clear Eye`)) {
-    cliExecute('pillkeeper semirare');
+    cliExecute('acquire hermit permit');
+    visitUrl('hermit.php');
+    cliExecute('acquire 11-leaf clover'); // use($item`11-leaf clover`);
+    cliExecute('use 11-leaf clover');
+    ensureEffect(toEffect('Lucky!'));
     adv1($location`The Limerick Dungeon`);
     use($item`cyclops eyedrops`);
   }
@@ -770,7 +806,7 @@ function doSpellTest() {
   ensureEffect($effect`Song of Sauce`);
   ensureEffect($effect`AAA-Charged`);
   ensureEffect($effect`Carol of the Hells`);
-  //ensureEffect($effect`Arched Eyebrow of the Archmage`);
+  ensureEffect($effect`Arched Eyebrow of the Archmage`);
   ensureSong($effect`Jackasses' Symphony of Destruction`);
 
   ensureMeteorShowerAndCarolGhostEffect();
@@ -795,25 +831,6 @@ function doHotResTest() {
     if (!have($effect`Fireproof Foam Suit`)) throw `Error, not foamy enough`; // eslint-disable-line
   }
 
-  if (!have($effect`Synthesis: Hot`)) {
-    !have($item`Chubby and Plump bar`) && useSkill(1, $skill`Chubby and Plump`);
-
-    // Tune moon sign to Blender (for advs from booze and Gno-Mart access).
-    if (!get('moonTuned')) {
-      // Unequip spoon.
-      equip($slot`acc1`, $item`Retrospecs`);
-      equip($slot`acc2`, $item`Powerful Glove`);
-      equip($slot`acc3`, $item`Lil' Doctor™ bag`);
-
-      // Actually tune the moon.
-      visitUrl('inv_use.php?whichitem=10254&doit=96&whichsign=8');
-    }
-
-    ensureItem(1, $item`Desert Bus pass`);
-    ensureItem(1, $item`lime-and-chile-flavored chewing gum`);
-    sweetSynthesis($item`Chubby and Plump bar`, $item`lime-and-chile-flavored chewing gum`);
-  }
-
   ensureEffect($effect`Elemental Saucesphere`);
   ensureEffect($effect`Astral Shell`);
   ensureEffect($effect`Blood Bond`);
@@ -823,6 +840,8 @@ function doHotResTest() {
   ensureEffect($effect`Hot-Headed`);
 
   cliExecute('retrocape vampire hold');
+
+  cliExecute('modtrace hot res');
 }
 
 function doNonCombatTest() {
@@ -985,10 +1004,9 @@ const endRunAndStartAftercore = () => {
   cliExecute('ccs default');
   cliExecute('boombox food');
   cliExecute('refresh all');
-
   cliExecute('hagnk all');
   cliExecute('acquire bitchin meatcar');
-  buy($item`clockwork maid`, 1, 3500);
+  buy($item`clockwork maid`, 1, 8000);
   use($item`clockwork maid`);
   visitUrl('peevpee.php?action=smashstone&confirm=on');
 

@@ -6,7 +6,7 @@ use(1, $item`School of Hard Knocks Diploma`);
 
 if (pvpAttacksLeft() > 0) {
   cliExecute('uberpvpoptimizer');
-  cliExecute('pvp loot fashion');
+  cliExecute('pvp loot early');
 }
 
 cliExecute('refresh inventory');
