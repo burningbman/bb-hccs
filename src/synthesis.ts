@@ -1,14 +1,16 @@
 import {
-  haveEffect,
-  print,
-  getInventory,
-  mySign,
   availableAmount,
+  Effect,
+  getInventory,
+  haveEffect,
+  Item,
+  mySign,
+  print,
   retrieveItem,
   sweetSynthesis,
   sweetSynthesisResult,
 } from 'kolmafia';
-import { $items, $item, $effects } from 'libram';
+import { $effects, $item, $items } from 'libram';
 import { ensureItem } from './lib';
 
 const npcCandies = $items`jaba&ntilde;ero-flavored chewing gum, lime-and-chile-flavored chewing gum, pickle-flavored chewing gum, tamarind-flavored chewing gum`;

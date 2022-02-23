@@ -9,6 +9,7 @@ import {
   cliExecute,
   create,
   eat,
+  Effect,
   equip,
   equippedItem,
   familiarWeight,
@@ -18,6 +19,9 @@ import {
   haveEffect,
   haveSkill,
   inMultiFight,
+  Item,
+  Location,
+  Monster,
   myFamiliar,
   myMaxmp,
   myMp,
@@ -29,6 +33,7 @@ import {
   setAutoAttack,
   setProperty,
   shopAmount,
+  Skill,
   storageAmount,
   sweetSynthesis,
   takeShop,
@@ -120,8 +125,8 @@ export function ensureHermitItem(quantity: number, it: Item): void {
   const count = quantity - availableAmount(it);
   while (
     availableAmount($item`worthless trinket`) +
-      availableAmount($item`worthless gewgaw`) +
-      availableAmount($item`worthless knick-knack`) <
+    availableAmount($item`worthless gewgaw`) +
+    availableAmount($item`worthless knick-knack`) <
     count
   ) {
     ensureItem(1, $item`chewing gum on a string`);
@@ -380,7 +385,7 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
       if (sausageFightGuaranteed()) {
         equip($item`Kramco Sausage-o-Matic™`);
       } else {
-        location = $location`The Outskirts of Cobb's Knob`;
+        location = $location`The Dire Warren`;
       }
       break;
     case $effect`Let It Snow/Boil/Stink/Frighten/Grease`:
@@ -467,6 +472,9 @@ export function useBestFamiliar(): void {
   if (get('camelSpit') !== 100) {
     useFamiliar($familiar`Melodramedary`);
     equip($slot`familiar`, $item`dromedary drinking helmet`);
+    cliExecute('mummery myst');
+  } else if (get("_hipsterAdv") < 7) {
+    useFamiliar($familiar`Artistic Goth Kid`);
   } else {
     useFamiliar($familiar`Shorter-Order Cook`);
   }
@@ -493,5 +501,18 @@ export function fax(monster: Monster): void {
       if (checkFax(monster)) return;
     }
     abort(`Failed to acquire photocopied ${monster.name}.`);
+  }
+}
+
+export function mapMacro(location: Location, monster: Monster, macro: Macro): void {
+  macro.setAutoAttack();
+  useSkill($skill`Map the Monsters`);
+  if (!get("mappingMonsters")) throw `I am not actually mapping anything. Weird!`;
+  else {
+    while (get("mappingMonsters")) {
+      visitUrl(toUrl(location));
+      runChoice(1, `heyscriptswhatsupwinkwink=${monster.id}`);
+      runCombat(macro.toString());
+    }
   }
 }
