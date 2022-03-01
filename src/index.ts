@@ -218,13 +218,13 @@ function vote() {
 }
 
 function equipStatOutfit() {
-  if (CONTEXT.updateOutfits) {
-    new Requirement(['100 mysticality experience percent, mysticality experience'], {
-      forceEquip: $items`makeshift garbage shirt`
-    }).maximize();
-    cliExecute(`outfit save ${STAT_GAIN_OUTFIT}`);
-  }
-  outfit(`${STAT_GAIN_OUTFIT}`);
+  // if (CONTEXT.updateOutfits) {
+  new Requirement(['100 mysticality experience percent, mysticality experience'], {
+    forceEquip: $items`makeshift garbage shirt`
+  }).maximize();
+  cliExecute(`outfit save ${STAT_GAIN_OUTFIT}`);
+  // }
+  // outfit(`${STAT_GAIN_OUTFIT}`);
 }
 
 function setup() {
