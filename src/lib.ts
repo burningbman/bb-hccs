@@ -48,7 +48,7 @@ import {
   visitUrl,
   wait,
   weightAdjustment,
-} from 'kolmafia';
+} from "kolmafia";
 import {
   $effect,
   $effects,
@@ -63,7 +63,7 @@ import {
   Macro,
   property,
   set,
-} from 'libram';
+} from "libram";
 
 const FUDGE = $item`Crimbo fudge`;
 const PECAN = $item`Crimbo candied pecan`;
@@ -75,7 +75,7 @@ const SUGAR_SHIRT = $item`sugar shirt`;
 
 export function getPropertyInt(name: string): number {
   const str = getProperty(name);
-  if (str === '') {
+  if (str === "") {
     throw `Unknown property ${name}.`;
   }
   return toInt(str);
@@ -98,7 +98,9 @@ export function ensureItem(quantity: number, it: Item): void {
     buy(quantity - availableAmount(it), it);
   }
   if (availableAmount(it) < quantity) {
-    throw `Could not buy ${quantity} of item ${it.name}: only ${availableAmount(it)}.`;
+    throw `Could not buy ${quantity} of item ${it.name}: only ${availableAmount(
+      it
+    )}.`;
   }
 }
 
@@ -107,7 +109,7 @@ export function ensureCreateItem(quantity: number, it: Item): void {
     create(quantity - availableAmount(it), it);
   }
   if (availableAmount(it) < quantity) {
-    throw 'Could not create item.';
+    throw "Could not create item.";
   }
 }
 
@@ -125,8 +127,8 @@ export function ensureHermitItem(quantity: number, it: Item): void {
   const count = quantity - availableAmount(it);
   while (
     availableAmount($item`worthless trinket`) +
-    availableAmount($item`worthless gewgaw`) +
-    availableAmount($item`worthless knick-knack`) <
+      availableAmount($item`worthless gewgaw`) +
+      availableAmount($item`worthless knick-knack`) <
     count
   ) {
     ensureItem(1, $item`chewing gum on a string`);
@@ -136,7 +138,11 @@ export function ensureHermitItem(quantity: number, it: Item): void {
   retrieveItem(count, it);
 }
 
-export function ensureNpcEffect(ef: Effect, quantity: number, potion: Item): void {
+export function ensureNpcEffect(
+  ef: Effect,
+  quantity: number,
+  potion: Item
+): void {
   if (haveEffect(ef) === 0) {
     ensureItem(quantity, potion);
     if (!cliExecute(ef.default) || haveEffect(ef) === 0) {
@@ -185,9 +191,9 @@ export function ensureMpSausage(mp: number): void {
 }
 
 export function sausageFightGuaranteed(): boolean {
-  const goblinsFought = getPropertyInt('_sausageFights');
+  const goblinsFought = getPropertyInt("_sausageFights");
   const nextGuaranteed =
-    getPropertyInt('_lastSausageMonsterTurn') +
+    getPropertyInt("_lastSausageMonsterTurn") +
     4 +
     goblinsFought * 3 +
     Math.max(0, goblinsFought - 5) ** 3;
@@ -195,23 +201,28 @@ export function sausageFightGuaranteed(): boolean {
 }
 
 export function itemPriority(...items: Item[]): Item {
-  return items.find((item: Item) => availableAmount(item) > 0) ?? items[items.length - 1];
+  return (
+    items.find((item: Item) => availableAmount(item) > 0) ??
+    items[items.length - 1]
+  );
 }
 
 export function setClan(target: string): boolean {
   if (getClanName() !== target) {
-    const clanCache = JSON.parse(getProperty('hccs_clanCache') || '{}');
+    const clanCache = JSON.parse(getProperty("hccs_clanCache") || "{}");
     if (clanCache.target === undefined) {
-      const recruiter = visitUrl('clan_signup.php');
+      const recruiter = visitUrl("clan_signup.php");
       const clanRe = /<option value=([0-9]+)>([^<]+)<\/option>/g;
       let match;
       while ((match = clanRe.exec(recruiter)) !== null) {
         clanCache[match[2]] = match[1];
       }
     }
-    setProperty('hccs_clanCache', JSON.stringify(clanCache));
+    setProperty("hccs_clanCache", JSON.stringify(clanCache));
 
-    visitUrl(`showclan.php?whichclan=${clanCache[target]}&action=joinclan&confirm=on&pwd`);
+    visitUrl(
+      `showclan.php?whichclan=${clanCache[target]}&action=joinclan&confirm=on&pwd`
+    );
     if (getClanName() !== target) {
       throw `failed to switch clans to ${target}. Did you spell it correctly? Are you whitelisted?`;
     }
@@ -224,27 +235,29 @@ export function eatPizza(...ingredients: Item[]): void {
   visitUrl(`campground.php?action=makepizza&pizza=${ingrs}`);
   ensureItem(1, $item`diabolic pizza`);
   eat($item`diabolic pizza`);
-  cliExecute('refresh inventory');
+  cliExecute("refresh inventory");
 }
 
 export function mapMonster(location: Location, monster: Monster): void {
   if (
     haveSkill($skill`Map the Monsters`) &&
-    !get('mappingMonsters') &&
-    get('_monstersMapped') < 3
+    !get("mappingMonsters") &&
+    get("_monstersMapped") < 3
   ) {
     useSkill($skill`Map the Monsters`);
   }
 
-  if (!get('mappingMonsters')) throw 'Failed to setup Map the Monsters.';
+  if (!get("mappingMonsters")) throw "Failed to setup Map the Monsters.";
 
   const mapPage = visitUrl(toUrl(location), false, true);
-  if (!mapPage.includes('Leading Yourself Right to Them')) throw 'Something went wrong mapping.';
+  if (!mapPage.includes("Leading Yourself Right to Them"))
+    throw "Something went wrong mapping.";
 
   const fightPage = visitUrl(
     `choice.php?pwd&whichchoice=1435&option=1&heyscriptswhatsupwinkwink=${monster.id}`
   );
-  if (!fightPage.includes(monster.name)) throw 'Something went wrong starting the fight.';
+  if (!fightPage.includes(monster.name))
+    throw "Something went wrong starting the fight.";
 }
 
 export function mapAndSaberMonster(location: Location, monster: Monster): void {
@@ -278,7 +291,11 @@ export function wishEffect(ef: Effect): void {
   }
 }
 
-export function pullIfPossible(quantity: number, it: Item, maxPrice: number): boolean {
+export function pullIfPossible(
+  quantity: number,
+  it: Item,
+  maxPrice: number
+): boolean {
   if (pullsRemaining() > 0) {
     const quantityPull = Math.max(0, quantity - availableAmount(it));
     if (shopAmount(it) > 0) {
@@ -294,7 +311,8 @@ export function pullIfPossible(quantity: number, it: Item, maxPrice: number): bo
 
 export function ensurePullEffect(ef: Effect, it: Item): void {
   if (haveEffect(ef) === 0) {
-    if (availableAmount(it) > 0 || pullIfPossible(1, it, 50000)) ensureEffect(ef);
+    if (availableAmount(it) > 0 || pullIfPossible(1, it, 50000))
+      ensureEffect(ef);
   }
 }
 
@@ -314,7 +332,9 @@ const songSlots = [
 const allKnownSongs = ([] as Effect[]).concat(...songSlots);
 const allSongs = Skill.all()
   .filter(
-    (skill) => toStringAsh(skill.class as unknown as string) === 'Accordion Thief' && skill.buff
+    (skill) =>
+      toStringAsh(skill.class as unknown as string) === "Accordion Thief" &&
+      skill.buff
   )
   .map((skill) => toEffect(skill));
 export function openSongSlot(song: Effect): void {
@@ -361,16 +381,20 @@ export function withMacro<T>(macro: Macro, action: () => T): T {
 }
 
 export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
-  if (haveEffect($effect`Feeling Lost`)) abort('Attempting to Carol Ghost while feeling lost');
+  if (haveEffect($effect`Feeling Lost`))
+    abort("Attempting to Carol Ghost while feeling lost");
 
   if (
     have($effect`Holiday Yoked`) ||
     have($effect`Do You Crush What I Crush?`) ||
-    have($effect`Let It Snow/Boil/Stink/Frighten/Grease` || have($effect`Crimbo Wrapping`))
+    have(
+      $effect`Let It Snow/Boil/Stink/Frighten/Grease` ||
+        have($effect`Crimbo Wrapping`)
+    )
   ) {
     // allow carol ghosting again if getting same effect and have a custom macro
     if (!have(effect) || !macro) {
-      abort('Attempting to Carol Ghost with previous effect active.');
+      abort("Attempting to Carol Ghost with previous effect active.");
     }
   }
 
@@ -393,8 +417,8 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
       break;
   }
 
-  if (get('_reflexHammerUsed') >= 3 && get('_chestXRayUsed') >= 3 && !macro) {
-    throw 'No free-kill for Carol Ghost!';
+  if (get("_reflexHammerUsed") >= 3 && get("_chestXRayUsed") >= 3 && !macro) {
+    throw "No free-kill for Carol Ghost!";
   }
 
   useFamiliar($familiar`Ghost of Crimbo Carols`);
@@ -464,15 +488,15 @@ export function synthItem(): void {
 
 export function multiFightAutoAttack(): void {
   while (choiceFollowsFight() || inMultiFight()) {
-    visitUrl('choice.php');
+    visitUrl("choice.php");
   }
 }
 
 export function useBestFamiliar(): void {
-  if (get('camelSpit') !== 100) {
+  if (get("camelSpit") !== 100) {
     useFamiliar($familiar`Melodramedary`);
     equip($slot`familiar`, $item`dromedary drinking helmet`);
-    cliExecute('mummery myst');
+    cliExecute("mummery myst");
   } else if (get("_hipsterAdv") < 7) {
     useFamiliar($familiar`Artistic Goth Kid`);
   } else {
@@ -482,20 +506,23 @@ export function useBestFamiliar(): void {
 
 function checkFax(monster: Monster): boolean {
   const curClan = getClanName();
-  if (monster === $monster`ungulith`) setClan('Beldungeon');
-  cliExecute('fax receive');
+  if (monster === $monster`ungulith`) setClan("Beldungeon");
+  cliExecute("fax receive");
   if (monster === $monster`ungulith`) setClan(curClan);
-  if (property.getString('photocopyMonster').toLowerCase() === monster.name.toLowerCase()) {
+  if (
+    property.getString("photocopyMonster").toLowerCase() ===
+    monster.name.toLowerCase()
+  ) {
     return true;
   }
-  cliExecute('fax send');
+  cliExecute("fax send");
   return false;
 }
 
 export function fax(monster: Monster): void {
-  if (!get('_photocopyUsed')) {
+  if (!get("_photocopyUsed")) {
     if (checkFax(monster)) return;
-    chatPrivate('cheesefax', monster.name);
+    chatPrivate("cheesefax", monster.name);
     for (let i = 0; i < 3; i++) {
       wait(5 + i);
       if (checkFax(monster)) return;
@@ -504,10 +531,15 @@ export function fax(monster: Monster): void {
   }
 }
 
-export function mapMacro(location: Location, monster: Monster, macro: Macro): void {
+export function mapMacro(
+  location: Location,
+  monster: Monster,
+  macro: Macro
+): void {
   macro.setAutoAttack();
   useSkill($skill`Map the Monsters`);
-  if (!get("mappingMonsters")) throw `I am not actually mapping anything. Weird!`;
+  if (!get("mappingMonsters"))
+    throw `I am not actually mapping anything. Weird!`;
   else {
     while (get("mappingMonsters")) {
       visitUrl(toUrl(location));
@@ -515,4 +547,11 @@ export function mapMacro(location: Location, monster: Monster, macro: Macro): vo
       runCombat(macro.toString());
     }
   }
+}
+
+export function voterMonsterNow(): boolean {
+  return (
+    totalTurnsPlayed() % 11 === 1 &&
+    get("lastVoteMonsterTurn") < totalTurnsPlayed()
+  );
 }
