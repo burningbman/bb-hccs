@@ -50,7 +50,9 @@ import {
   BeachComb,
   CommunityService,
   get,
+  getTodaysHolidayWanderers,
   have,
+  holidayWanderers,
   Macro,
   Requirement,
   set,
@@ -108,6 +110,25 @@ const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
   .trySkill($skill`Spittoon Monsoon`)
   .skill($skill`Saucestorm`)
   .repeat();
+
+const PROF_MACRO = Macro.skill($skill`Curse of Weaksauce`)
+  .skill($skill`Entangling Noodles`)
+  .skill($skill`Micrometeorite`)
+  .trySkill($skill`Barrage of Tears`)
+  .trySkill($skill`Bowl Sideways`)
+  .trySkill($skill`lecture on relativity`)
+  .trySkill($skill`Spittoon Monsoon`)
+  .trySkill($skill`Beach Combo`)
+  .skill($skill`Saucegeyser`);
+
+const NEP_MACRO = Macro.skill($skill`Curse of Weaksauce`)
+  .skill($skill`Entangling Noodles`)
+  .skill($skill`Micrometeorite`)
+  .skill($skill`Barrage of Tears`)
+  .skill($skill`Sing Along`)
+  .trySkill($skill`Bowl Sideways`)
+  .skill($skill`Spittoon Monsoon`)
+  .skill($skill`Saucestorm`);
 
 function handleOutfit(test: TestObject | undefined) {
   if (!test) return;
@@ -476,6 +497,26 @@ function godLob() {
   }
 }
 
+function setupNEP() {
+  // Neverending Party
+  if (get("_questPartyFair") === "unstarted") {
+    setChoice(1322, 0);
+    visitUrl("adventure.php?snarfblat=528");
+    if (get("_questPartyFairQuest") === "food") {
+      runChoice(1);
+      setChoice(1324, 2);
+      setChoice(1326, 3);
+    } else if (get("_questPartyFairQuest") === "booze") {
+      runChoice(1);
+      setChoice(1324, 3);
+      setChoice(1327, 3);
+    } else {
+      runChoice(2);
+      setChoice(1324, 5);
+    }
+  }
+}
+
 function doFreeFights() {
   if (have($item`Desert Bus pass`)) return;
 
@@ -521,39 +562,18 @@ function doFreeFights() {
       .toString()
   );
 
-  // Neverending Party
-  if (get("_questPartyFair") === "unstarted") {
-    setChoice(1322, 0);
-    visitUrl("adventure.php?snarfblat=528");
-    if (get("_questPartyFairQuest") === "food") {
-      runChoice(1);
-      setChoice(1324, 2);
-      setChoice(1326, 3);
-    } else if (get("_questPartyFairQuest") === "booze") {
-      runChoice(1);
-      setChoice(1324, 3);
-      setChoice(1327, 3);
-    } else {
-      runChoice(2);
-      setChoice(1324, 5);
-    }
-  }
+  setupNEP();
 
+  // Use 10 NEP free kills
   while (get("_neverendingPartyFreeTurns") < 10) {
     upkeepHp();
     useBestFamiliar();
     adventureMacro(
       $location`The Neverending Party`,
-      Macro.trySkill($skill`Feel Pride`)
-        .skill($skill`Barrage of Tears`)
-        .skill($skill`Sing Along`)
-        .externalIf(
-          get("_neverendingPartyFreeTurns") === 0 ||
-            get("_neverendingPartyFreeTurns") === 5,
-          Macro.skill($skill`Bowl Sideways`)
-        )
-        .skill($skill`Spittoon Monsoon`)
-        .skill($skill`Saucestorm`)
+      Macro.externalIf(
+        get("_neverendingPartyFreeTurns") > 0, // make sure bowling sideways before feel pride
+        Macro.trySkill($skill`Feel Pride`)
+      ).step(NEP_MACRO)
     );
     if (
       get("lastEncounter").includes("Gone Kitchin") ||
@@ -563,111 +583,87 @@ function doFreeFights() {
     }
   }
 
-  // Free kills in NEP
-  equip($slot`acc2`, $item`Lil' Doctor™ bag`);
-  while (get("_shatteringPunchUsed") < 3 || get("_chestXRayUsed") < 3) {
-    useBestFamiliar();
-    upkeepHpAndMp();
-    adventureMacroAuto(
-      $location`The Neverending Party`,
-      Macro.if_(
-        'monstername "sausage goblin"',
-        new Macro().skill($skill`Saucegeyser`).repeat()
-      )
-        .if_(
-          "monstername black crayon*",
-          new Macro().skill($skill`Saucegeyser`).repeat()
-        )
-        .trySkill($skill`Bowl Sideways`)
-        .trySkill($skill`Shattering Punch`)
-        .trySkill($skill`Chest X-Ray`)
-    );
-  }
-
-  if (get("_backUpUses") < 10) {
-    equip($slot`acc2`, $item`hewn moon-rune spoon`);
-    if (
-      !sausageFightGuaranteed() &&
-      get("lastCopyableMonster") !== $monster`sausage goblin`
-    ) {
-      throw "Sausage not ready for back-ups and kramco chain";
-    }
-
+  if (
+    !sausageFightGuaranteed() &&
+    get("lastCopyableMonster") !== $monster`sausage goblin`
+  ) {
+    throw "Sausage not ready for prof chain.";
+  } else {
     if (sausageFightGuaranteed()) {
       upkeepHp();
       equip($item`Kramco Sausage-o-Matic™`);
 
       adventureMacro(
-        $location`Noob Cave`,
-        Macro.if_('!monstername "sausage goblin"', new Macro().step("abort"))
-          .skill($skill`Barrage of Tears`)
-          .skill($skill`Spittoon Monsoon`)
-          .skill($skill`Sing Along`)
-          .skill($skill`Saucestorm`)
+        $location`The Neverending Party`,
+        Macro.if_(
+          '!monstername "sausage goblin"',
+          new Macro().step("abort")
+        ).step(NEP_MACRO)
       );
     }
 
-    if (get("lastCopyableMonster") !== $monster`sausage goblin`) {
-      throw "Sausage not setup for back-ups and kramco";
+    // Professor chain goblins
+    if (get("_pocketProfessorLectures") === 0) {
+      useFamiliar($familiar`Pocket Professor`);
+      ensureEffect($effect`Empathy`);
+
+      if (CONTEXT.updateOutfits) {
+        new Requirement(["familiar weight"], {
+          forceEquip: $items`backup camera, makeshift garbage shirt`,
+        }).maximize();
+        cliExecute("outfit save hccs_profchain");
+      } else {
+        outfit("hccs_profchain");
+      }
+
+      // need 2 adventures to lecture on relativity
+      if (myAdventures() < 2) eat(2 - myAdventures(), $item`magical sausage`);
+
+      adventureMacroAuto(
+        $location`The Neverending Party`,
+        Macro.if_(
+          '!monstername "sausage goblin"',
+          Macro.skill($skill`Back-Up to your Last Enemy`)
+        ).step(PROF_MACRO)
+      );
+
+      upkeepHpAndMp();
     }
 
-    // back-up sausages in Noob Cave
-    equip($slot`acc3`, $item`backup camera`);
-    while (get("_backUpUses") < 10) {
+    // use back-ups in NEP
+    equipStatOutfit();
+    equip($item`Kramco Sausage-o-Matic™`);
+    equip($item`backup camera`, $slot`acc3`);
+    while (get("_backUpUses") < 11) {
       upkeepHp();
       useBestFamiliar();
       adventureMacro(
-        $location`Noob Cave`,
+        $location`The Neverending Party`,
         Macro.if_(
-          'monstername "crate"',
-          new Macro().skill($skill`Back-Up to your Last Enemy`)
-        )
-          .if_(
-            '!monstername "sausage goblin"',
-            new Macro().if_(
-              "!monstername black crayon*",
-              new Macro().step("abort")
-            )
-          )
-          .trySkill($skill`Barrage of Tears`)
-          .trySkill($skill`Sing Along`)
-          .trySkill($skill`Spittoon Monsoon`)
-          .skill($skill`Saucestorm`)
+          "(monsterid 2104) || (monstername Black Crayon *)",
+          NEP_MACRO
+        ).skill($skill`Back-Up to your Last Enemy`)
       );
     }
-
-    upkeepHp();
   }
 
-  // Professor chain off the last back-up
-  if (get("_pocketProfessorLectures") === 0) {
-    useFamiliar($familiar`Pocket Professor`);
-    ensureEffect($effect`Empathy`);
-
-    if (CONTEXT.updateOutfits) {
-      new Requirement(["familiar weight"], {
-        forceEquip: $items`backup camera, makeshift garbage shirt`,
-      }).maximize();
-      cliExecute("outfit save hccs_profchain");
-    } else {
-      outfit("hccs_profchain");
-    }
-
-    // need 2 adventures to lecture on relativity
-    if (myAdventures() < 2) eat(1, $item`magical sausage`);
-
-    adventureMacroAuto(
-      $location`The Dire Warren`,
-      Macro.trySkill($skill`Back-Up to your Last Enemy`)
-        .skill($skill`Curse of Weaksauce`)
-        .skill($skill`Entangling Noodles`)
-        .skill($skill`Micrometeorite`)
-        .trySkill($skill`lecture on relativity`)
-        .skill($skill`Spittoon Monsoon`)
-        .skill($skill`Saucegeyser`)
-    );
-
+  // Use other free kills
+  equipStatOutfit();
+  equip($item`Kramco Sausage-o-Matic™`);
+  equip($slot`acc3`, $item`Lil' Doctor™ bag`);
+  while (get("_shatteringPunchUsed") < 3 || get("_chestXRayUsed") < 3) {
+    useBestFamiliar();
     upkeepHpAndMp();
+    adventureMacroAuto(
+      $location`The Neverending Party`,
+      Macro.trySkill($skill`Bowl Sideways`)
+        .if_(
+          "(monsterid 2104) || (monstername Black Crayon *)",
+          new Macro().skill($skill`Saucegeyser`).repeat()
+        )
+        .trySkill($skill`Shattering Punch`)
+        .trySkill($skill`Chest X-Ray`)
+    );
   }
 
   ensureItem(1, $item`Desert Bus pass`);
@@ -1021,7 +1017,8 @@ const tests: TestObject[] = [
     spreadsheetTurns: 60,
     test: CommunityService.CoilWire,
     doTestPrep: () => {
-      return;
+      setup();
+      getPizzaIngredients();
     },
   },
 ];
@@ -1041,13 +1038,19 @@ const parseInput = (input: string) => {
 
 export function main(input: string): void {
   setAutoAttack(0);
-
   parseInput(input);
 
-  setup();
-  getPizzaIngredients();
-
-  runTest(TestEnum.COIL_WIRE);
+  const coilWireStatus = CommunityService.CoilWire.run(
+    () => {
+      setup();
+      getPizzaIngredients();
+    },
+    false,
+    60
+  );
+  if (coilWireStatus === "failed") {
+    abort(`Didn't coil wire.`);
+  }
 
   useStatGains();
   buffBeforeGoblins();
