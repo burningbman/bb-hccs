@@ -58,6 +58,8 @@ import {
   $monster,
   $skill,
   $slot,
+  Clan,
+  ensureEffect,
   get,
   have,
   Macro,
@@ -166,30 +168,6 @@ export function ensurePotionEffect(ef: Effect, potion: Item): void {
   }
 }
 
-export function ensureEffect(ef: Effect, turns = 1): void {
-  if (haveEffect(ef) < turns) {
-    if (!cliExecute(ef.default) || haveEffect(ef) === 0) {
-      throw `Failed to get effect ${ef.name}.`;
-    }
-  } else {
-    print(`Already have effect ${ef.name}.`);
-  }
-}
-
-export function ensureMpTonic(mp: number): void {
-  while (myMp() < mp) {
-    ensureItem(1, $item`Doc Galaktik's Invigorating Tonic`);
-    use(1, $item`Doc Galaktik's Invigorating Tonic`);
-  }
-}
-
-export function ensureMpSausage(mp: number): void {
-  while (myMp() < Math.min(mp, myMaxmp())) {
-    ensureCreateItem(1, $item`magical sausage`);
-    eat(1, $item`magical sausage`);
-  }
-}
-
 export function sausageFightGuaranteed(): boolean {
   const goblinsFought = getPropertyInt("_sausageFights");
   const nextGuaranteed =
@@ -198,73 +176,6 @@ export function sausageFightGuaranteed(): boolean {
     goblinsFought * 3 +
     Math.max(0, goblinsFought - 5) ** 3;
   return goblinsFought === 0 || totalTurnsPlayed() >= nextGuaranteed;
-}
-
-export function itemPriority(...items: Item[]): Item {
-  return (
-    items.find((item: Item) => availableAmount(item) > 0) ??
-    items[items.length - 1]
-  );
-}
-
-export function setClan(target: string): boolean {
-  if (getClanName() !== target) {
-    const clanCache = JSON.parse(getProperty("hccs_clanCache") || "{}");
-    if (clanCache.target === undefined) {
-      const recruiter = visitUrl("clan_signup.php");
-      const clanRe = /<option value=([0-9]+)>([^<]+)<\/option>/g;
-      let match;
-      while ((match = clanRe.exec(recruiter)) !== null) {
-        clanCache[match[2]] = match[1];
-      }
-    }
-    setProperty("hccs_clanCache", JSON.stringify(clanCache));
-
-    visitUrl(
-      `showclan.php?whichclan=${clanCache[target]}&action=joinclan&confirm=on&pwd`
-    );
-    if (getClanName() !== target) {
-      throw `failed to switch clans to ${target}. Did you spell it correctly? Are you whitelisted?`;
-    }
-  }
-  return true;
-}
-
-export function eatPizza(...ingredients: Item[]): void {
-  const ingrs = ingredients.map((ingr) => toInt(ingr)).join();
-  visitUrl(`campground.php?action=makepizza&pizza=${ingrs}`);
-  ensureItem(1, $item`diabolic pizza`);
-  eat($item`diabolic pizza`);
-  cliExecute("refresh inventory");
-}
-
-export function mapMonster(location: Location, monster: Monster): void {
-  if (
-    haveSkill($skill`Map the Monsters`) &&
-    !get("mappingMonsters") &&
-    get("_monstersMapped") < 3
-  ) {
-    useSkill($skill`Map the Monsters`);
-  }
-
-  if (!get("mappingMonsters")) throw "Failed to setup Map the Monsters.";
-
-  const mapPage = visitUrl(toUrl(location), false, true);
-  if (!mapPage.includes("Leading Yourself Right to Them"))
-    throw "Something went wrong mapping.";
-
-  const fightPage = visitUrl(
-    `choice.php?pwd&whichchoice=1435&option=1&heyscriptswhatsupwinkwink=${monster.id}`
-  );
-  if (!fightPage.includes(monster.name))
-    throw "Something went wrong starting the fight.";
-}
-
-export function mapAndSaberMonster(location: Location, monster: Monster): void {
-  mapMonster(location, monster);
-
-  withMacro(Macro.skill($skill`Use the Force`), runCombat);
-  if (handlingChoice()) runChoice(3);
 }
 
 export function tryUse(quantity: number, it: Item): boolean {
@@ -360,14 +271,6 @@ export function ensureSong(ef: Effect): void {
     }
   } else {
     print(`Already have effect ${ef.name}.`);
-  }
-}
-
-export function ensureOde(turns: number): void {
-  while (haveEffect($effect`Ode to Booze`) < turns) {
-    ensureMpTonic(50);
-    openSongSlot($effect`Ode to Booze`);
-    useSkill(1, $skill`The Ode to Booze`);
   }
 }
 
@@ -499,6 +402,8 @@ export function useBestFamiliar(): void {
     cliExecute("mummery myst");
   } else if (get("_hipsterAdv") < 7) {
     useFamiliar($familiar`Artistic Goth Kid`);
+  } else if (!have($item`short stack of pancakes`)) {
+    useFamiliar($familiar`Shorter-Order Cook`);
   } else {
     useFamiliar($familiar`Shorter-Order Cook`);
   }
@@ -506,9 +411,9 @@ export function useBestFamiliar(): void {
 
 function checkFax(monster: Monster): boolean {
   const curClan = getClanName();
-  if (monster === $monster`ungulith`) setClan("Beldungeon");
+  if (monster === $monster`ungulith`) Clan.join("Beldungeon");
   cliExecute("fax receive");
-  if (monster === $monster`ungulith`) setClan(curClan);
+  if (monster === $monster`ungulith`) Clan.join(curClan);
   if (
     property.getString("photocopyMonster").toLowerCase() ===
     monster.name.toLowerCase()

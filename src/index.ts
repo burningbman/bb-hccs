@@ -3,6 +3,7 @@ import {
   autosell,
   availableAmount,
   cliExecute,
+  create,
   drink,
   eat,
   equip,
@@ -11,7 +12,6 @@ import {
   getProperty,
   handlingChoice,
   haveEffect,
-  haveOutfit,
   haveSkill,
   myAdventures,
   myBasestat,
@@ -23,12 +23,12 @@ import {
   myMeat,
   myMp,
   numericModifier,
-  outfit,
   print,
   restoreMp,
   runChoice,
   runCombat,
   setAutoAttack,
+  toItem,
   use,
   useFamiliar,
   useSkill,
@@ -48,11 +48,12 @@ import {
   adventureMacro,
   adventureMacroAuto,
   BeachComb,
+  Clan,
+  CombatLoversLocket,
   CommunityService,
+  ensureEffect,
   get,
-  getTodaysHolidayWanderers,
   have,
-  holidayWanderers,
   Macro,
   Requirement,
   set,
@@ -60,7 +61,6 @@ import {
 } from "libram";
 import {
   adventureWithCarolGhost,
-  ensureEffect,
   ensureItem,
   ensurePotionEffect,
   ensurePullEffect,
@@ -71,7 +71,7 @@ import {
   pullIfPossible,
   sausageFightGuaranteed,
   setChoice,
-  setClan,
+  shrug,
   synthExp,
   synthItem,
   tryUse,
@@ -101,9 +101,13 @@ interface TestObject {
   doTestPrep: { (): void };
 }
 
-const STAT_GAIN_OUTFIT = "hccs_freefights";
+const UMBRELLA = toItem(10899);
 
-const CONTEXT: { updateOutfits: boolean } = { updateOutfits: false };
+const foldUmbrella = (choice: number) => {
+  visitUrl("inventory.php?action=useumbrella");
+  runChoice(choice);
+};
+
 const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
   .trySkill($skill`Barrage of Tears`)
   .trySkill($skill`Beach Combo`)
@@ -132,12 +136,7 @@ const NEP_MACRO = Macro.skill($skill`Curse of Weaksauce`)
 
 function handleOutfit(test: TestObject | undefined) {
   if (!test) return;
-  if (CONTEXT.updateOutfits) {
-    test.test.maximize();
-    cliExecute(`outfit save hccs_${TestEnum[test.id]}`);
-  } else if (haveOutfit(`hccs_${TestEnum[test.id]}`)) {
-    outfit(`hccs_${TestEnum[test.id]}`);
-  }
+  test.test.maximize();
 }
 
 function ensureMeteorShowerAndCarolGhostEffect() {
@@ -261,13 +260,13 @@ function vote() {
 }
 
 function equipStatOutfit() {
+  foldUmbrella(1);
   new Requirement(
     ["100 mysticality experience percent, mysticality experience"],
     {
-      forceEquip: $items`makeshift garbage shirt`,
+      forceEquip: [$item`makeshift garbage shirt`, UMBRELLA],
     }
   ).maximize();
-  cliExecute(`outfit save ${STAT_GAIN_OUTFIT}`);
 }
 
 function setup() {
@@ -278,7 +277,7 @@ function setup() {
   set("autoSatisfyWithCoinmasters", true);
   set("hpAutoRecovery", 0.8);
 
-  setClan("Bonus Adventures from Hell");
+  Clan.join("Bonus Adventures from Hell");
 
   use($item`Bird-a-Day calendar`);
 
@@ -309,6 +308,7 @@ function setup() {
   cliExecute("mcd 10");
   cliExecute("retrocape mysticality hold");
   cliExecute("fold makeshift garbage shirt");
+  cliExecute(`pull 1 ${$item`Staff of Simmering Hatred`}`);
   SongBoom.setSong("Total Eclipse of Your Meat");
   cliExecute(
     "pantogram mysticality|hot|drops of blood|some self-respect|your hopes|silent"
@@ -338,6 +338,10 @@ function setup() {
     cliExecute("acquire fish hatchet");
   }
 
+  if (get("_horseryCrazyMys").indexOf("+") === 0) {
+    cliExecute("horsery stat");
+  }
+
   getBatteries();
 
   useSkill($skill`Summon Crimbo Candy`);
@@ -351,9 +355,9 @@ function getPizzaIngredients() {
   if (have($item`cherry`) || CommunityService.CoilWire.isDone()) return;
 
   new Requirement(
-    ["100 mysticality experience percent, mysticality experience"],
+    ["100 mysticality experience percent, mysticality experience, ML"],
     {
-      forceEquip: $items`Daylight Shavings Helmet`, // Setup PM to get 2nd buff after coiling wire
+      forceEquip: [...$items`Daylight Shavings Helmet`, UMBRELLA], // Setup PM to get 2nd buff after coiling wire
       preventEquip: $items`makeshift garbage shirt`, // Save exp boosts for scalers
     }
   ).maximize();
@@ -418,12 +422,12 @@ function useStatGains() {
   ensureEffect($effect`Inscrutable Gaze`);
   ensureEffect($effect`Thaumodynamic`);
   synthExp();
-  ensurePullEffect(
-    $effect`Different Way of Seeing Things`,
-    $item`non-Euclidean angle`
-  );
+  // ensurePullEffect(
+  //   $effect`Different Way of Seeing Things`,
+  //   $item`non-Euclidean angle`
+  // );
 
-  if (Math.round(numericModifier("mysticality experience percent")) < 125) {
+  if (Math.round(numericModifier("mysticality experience percent")) < 100) {
     throw "Insufficient +stat%.";
   }
 
@@ -486,14 +490,14 @@ function fightGodLob() {
 
 function godLob() {
   if (get("_godLobsterFights") === 0) {
-    equip($item`familiar scrapbook`); // don't try to find kramco here
-
     useFamiliar($familiar`God Lobster`);
     setChoice(1310, 1);
     fightGodLob();
     equip($slot`familiar`, $item`God Lobster's Scepter`);
     fightGodLob();
     equip($slot`familiar`, $item`God Lobster's Ring`);
+    setChoice(1310, 2);
+    fightGodLob();
   }
 }
 
@@ -531,6 +535,7 @@ function doFreeFights() {
   ensureEffect($effect`Big`);
   ensureEffect($effect`Blood Bond`);
   ensureEffect($effect`Blood Bubble`);
+  ensureEffect($effect`Feeling Excited`);
   ensureEffect($effect`Drescher's Annoying Noise`);
   ensureEffect($effect`Elemental Saucesphere`);
   ensureEffect($effect`Inscrutable Gaze`);
@@ -539,7 +544,6 @@ function doFreeFights() {
   ensureEffect($effect`Singer's Faithful Ocelot`);
   ensureEffect($effect`Stevedave's Shanty of Superiority`);
   ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
-  ensureEffect($effect`Feeling Excited`);
 
   godLob();
   useBestFamiliar();
@@ -555,12 +559,15 @@ function doFreeFights() {
     );
   }
 
-  cliExecute("reminisce government agent");
-  runCombat(
-    Macro.skill($skill`Feel Envy`)
-      .skill($skill`Gingerbread Mob Hit`)
-      .toString()
-  );
+  const reminisced = CombatLoversLocket.monstersReminisced();
+  if (!reminisced.includes($monster`government agent`)) {
+    cliExecute("reminisce government agent");
+    runCombat(
+      Macro.skill($skill`Feel Envy`)
+        .skill($skill`Gingerbread Mob Hit`)
+        .toString()
+    );
+  }
 
   setupNEP();
 
@@ -607,14 +614,12 @@ function doFreeFights() {
       useFamiliar($familiar`Pocket Professor`);
       ensureEffect($effect`Empathy`);
 
-      if (CONTEXT.updateOutfits) {
-        new Requirement(["familiar weight"], {
-          forceEquip: $items`backup camera, makeshift garbage shirt`,
-        }).maximize();
-        cliExecute("outfit save hccs_profchain");
-      } else {
-        outfit("hccs_profchain");
-      }
+      new Requirement(["familiar weight"], {
+        forceEquip: [
+          ...$items`backup camera, makeshift garbage shirt`,
+          UMBRELLA,
+        ],
+      }).maximize();
 
       // need 2 adventures to lecture on relativity
       if (myAdventures() < 2) eat(2 - myAdventures(), $item`magical sausage`);
@@ -632,7 +637,7 @@ function doFreeFights() {
 
     // use back-ups in NEP
     equipStatOutfit();
-    equip($item`Kramco Sausage-o-Matic™`);
+    // equip($item`Kramco Sausage-o-Matic™`);
     equip($item`backup camera`, $slot`acc3`);
     while (get("_backUpUses") < 11) {
       upkeepHp();
@@ -649,7 +654,7 @@ function doFreeFights() {
 
   // Use other free kills
   equipStatOutfit();
-  equip($item`Kramco Sausage-o-Matic™`);
+  // equip($item`Kramco Sausage-o-Matic™`);
   equip($slot`acc3`, $item`Lil' Doctor™ bag`);
   while (get("_shatteringPunchUsed") < 3 || get("_chestXRayUsed") < 3) {
     useBestFamiliar();
@@ -668,6 +673,13 @@ function doFreeFights() {
 
   ensureItem(1, $item`Desert Bus pass`);
   cliExecute("fold wad of used tape"); // for stat and item tests
+
+  if (
+    get("_horseryCrazyMox").indexOf("-") === 0 ||
+    get("_horseryCrazyMus").indexOf("-") === 0
+  ) {
+    cliExecute("horsery -combat");
+  }
 }
 
 function doHpTest() {
@@ -718,6 +730,7 @@ function doMusTest() {
 }
 
 function doItemTest() {
+  foldUmbrella(3);
   ensureItem(1, $item`oversized sparkler`);
 
   // cyclops eyedrops
@@ -784,6 +797,7 @@ function doFamiliarTest() {
 }
 
 function doWeaponTest() {
+  foldUmbrella(4);
   ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
 
   if (!haveEffect($effect`Cowrruption`)) {
@@ -835,6 +849,7 @@ function doWeaponTest() {
 }
 
 function doSpellTest() {
+  foldUmbrella(5);
   ensureDeepDarkVisions(); // should already have this from weapon test
 
   if (!have($effect`Saucefingers`)) {
@@ -857,6 +872,10 @@ function doSpellTest() {
     ensureEffect($effect`Full Bottle in front of Me`);
   }
 
+  if (have($item`sugar sheet`) && !have($item`sugar chapeau`)) {
+    create($item`sugar chapeau`);
+  }
+
   useSkill(1, $skill`Spirit of Cayenne`);
   ensureEffect($effect`Elemental Saucesphere`);
   ensureEffect($effect`Astral Shell`);
@@ -870,7 +889,6 @@ function doSpellTest() {
 
   ensureMeteorShowerAndCarolGhostEffect();
 
-  outfit("hccs_SPELL");
   if (Math.round(numericModifier("spell damage percent")) % 50 >= 40) {
     ensureItem(1, $item`soda water`);
     ensurePotionEffect($effect`Concentration`, $item`cordial of concentration`);
@@ -906,9 +924,12 @@ function doHotResTest() {
 }
 
 function doNonCombatTest() {
+  cliExecute("horsery -combat");
+  foldUmbrella(6);
   if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
   equip($slot`acc3`, $item`Powerful Glove`);
 
+  shrug($effect`Moxious Madrigal`);
   ensureEffect($effect`Blood Bond`);
   ensureEffect($effect`Leash of Linguini`);
   ensureEffect($effect`Empathy`);
@@ -916,32 +937,10 @@ function doNonCombatTest() {
   ensureEffect($effect`Smooth Movements`);
   ensureEffect($effect`Invisible Avatar`);
   ensureEffect($effect`Feeling Lonely`);
-  ensureEffect($effect`A Rose by Any Other Material`);
+  // ensureEffect($effect`A Rose by Any Other Material`);
   ensureEffect($effect`Throwing Some Shade`);
   ensureEffect($effect`Silent Running`);
   ensureEffect($effect`Blessing of the Bird`); // PM has 7% NC bird
-
-  if (get("_godLobsterFights") < 3 && have($item`God Lobster's Ring`)) {
-    upkeepHpAndMp();
-    useFamiliar($familiar`God Lobster`);
-    equip($slot`familiar`, $item`God Lobster's Ring`);
-    setChoice(1310, 2);
-    visitUrl("main.php?fightgodlobster=1");
-    runCombat(
-      Macro.trySkill($skill`Curse of Weaksauce`)
-        .trySkill($skill`Bowl Straight Up`)
-        .trySkill($skill`Barrage of Tears`)
-        .trySkill($skill`Beach Combo`)
-        .trySkill($skill`Spittoon Monsoon`)
-        .skill($skill`Saucestorm`)
-        .repeat()
-        .toString()
-    );
-    visitUrl("choice.php");
-    runChoice(-1);
-  } else if (!have($effect`Silence of the God Lobster`)) {
-    throw "Not ready for god lob NC buff";
-  }
 
   useFamiliar($familiar`Disgeist`);
 
@@ -966,7 +965,7 @@ const tests: TestObject[] = [
   },
   {
     id: TestEnum.MUS,
-    spreadsheetTurns: 3,
+    spreadsheetTurns: 1,
     test: CommunityService.Muscle,
     doTestPrep: doMusTest,
   },
@@ -984,13 +983,13 @@ const tests: TestObject[] = [
   },
   {
     id: TestEnum.HOT_RES,
-    spreadsheetTurns: 2,
+    spreadsheetTurns: 1,
     test: CommunityService.HotRes,
     doTestPrep: doHotResTest,
   },
   {
     id: TestEnum.FAMILIAR,
-    spreadsheetTurns: 37,
+    spreadsheetTurns: 36,
     test: CommunityService.FamiliarWeight,
     doTestPrep: doFamiliarTest,
   },
@@ -1002,7 +1001,7 @@ const tests: TestObject[] = [
   },
   {
     id: TestEnum.SPELL,
-    spreadsheetTurns: 32,
+    spreadsheetTurns: 29,
     test: CommunityService.SpellDamage,
     doTestPrep: doSpellTest,
   },
@@ -1027,10 +1026,6 @@ const parseInput = (input: string) => {
   print("Parsing options");
   if (input) {
     for (const option of input.split(" ")) {
-      if (option.match(/outfit/i)) {
-        CONTEXT.updateOutfits = true;
-        print("Updating hccs outfits", "blue");
-      }
     }
   }
   print("Done parsing options");
@@ -1044,6 +1039,8 @@ export function main(input: string): void {
     () => {
       setup();
       getPizzaIngredients();
+      doGuaranteedGoblin();
+      doVotingMonster();
     },
     false,
     60
@@ -1066,15 +1063,14 @@ export function main(input: string): void {
   runTest(TestEnum.HitPoints);
   runTest(TestEnum.MUS);
   runTest(TestEnum.MOX);
+  runTest(TestEnum.NONCOMBAT);
 
   useFamiliar($familiar`Exotic Parrot`);
   equip($slot`familiar`, $item`cracker`);
-
   runTest(TestEnum.HOT_RES);
   runTest(TestEnum.FAMILIAR);
   runTest(TestEnum.WEAPON);
   runTest(TestEnum.SPELL);
-  runTest(TestEnum.NONCOMBAT);
   runTest(TestEnum.ITEM);
 
   // Mysticality.run(function () { }, false, 1); //eslint-disable-line
