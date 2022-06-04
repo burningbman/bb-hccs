@@ -9,6 +9,7 @@ const season = get("currentPVPSeason");
 
 const PVP_STANCE: { [key: string]: string } = {
   bear: "Maul Power",
+  pirate: "Smellin' Like a Stinkin' Rose",
 };
 
 const getTarget = () => {
@@ -26,5 +27,7 @@ if (pvpAttacksLeft() > 0) {
 }
 
 cliExecute("refresh inventory");
-ensureItem(1, $item`pixel star`);
+if (get('questL02Larva') !== 'unstarted') {
+  ensureItem(1, $item`pixel star`);
+}
 // cliExecute('philter');
