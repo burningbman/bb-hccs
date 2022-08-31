@@ -10,6 +10,7 @@ const season = get("currentPVPSeason");
 const PVP_STANCE: { [key: string]: string } = {
   bear: "Maul Power",
   pirate: "Smellin' Like a Stinkin' Rose",
+  glitch: "Installation Wizard"
 };
 
 const getTarget = () => {

@@ -317,11 +317,15 @@ function setup() {
   cliExecute("mcd 10");
   cliExecute("retrocape mysticality hold");
   cliExecute("fold makeshift garbage shirt");
-  cliExecute(`pull 1 ${$item`Staff of Simmering Hatred`}`);
+  if (!have($item`Staff of Simmering Hatred`)) {
+    cliExecute(`pull 1 ${$item`Staff of Simmering Hatred`}`);
+  }
   SongBoom.setSong("Total Eclipse of Your Meat");
-  cliExecute(
-    "pantogram mysticality|hot|drops of blood|some self-respect|your hopes|silent"
-  );
+  if (!have($item`pantogram pants`)) {
+    cliExecute(
+      "pantogram mysticality|hot|drops of blood|some self-respect|your hopes|silent"
+    );
+  }
 
   setChoice(1340, 3); // Turn off Lil' Doctor quests.
   setChoice(1387, 3); // set saber to drop items
@@ -421,10 +425,7 @@ function useStatGains() {
 
   equipStatOutfit();
 
-  if (
-    get("getawayCampsiteUnlocked") &&
-    haveEffect($effect `That's Just Cloud-Talk, Man`) === 0
-  ) {
+  if (    haveEffect($effect `That's Just Cloud-Talk, Man`) === 0  ) {
     visitUrl("place.php?whichplace=campaway&action=campaway_sky");
   }
 
@@ -574,13 +575,13 @@ function doFreeFights() {
     );
   }
 
-  const reminisced = CombatLoversLocket.monstersReminisced();
-  if (!reminisced.includes($monster `government agent`)) {
-    Macro.skill($skill `Feel Envy`)
-      .skill($skill `Gingerbread Mob Hit`).setAutoAttack();
-    cliExecute("reminisce government agent");
-    setAutoAttack(0);
-  }
+  // const reminisced = CombatLoversLocket.monstersReminisced();
+  // if (!reminisced.includes($monster `government agent`)) {
+  //   Macro.skill($skill `Feel Envy`)
+  //     .skill($skill `Gingerbread Mob Hit`).setAutoAttack();
+  //   cliExecute("reminisce government agent");
+  //   setAutoAttack(0);
+  // }
 
   setupNEP();
 
@@ -605,9 +606,11 @@ function doFreeFights() {
 
   if (
     !sausageFightGuaranteed() &&
-    get("lastCopyableMonster") !== $monster `sausage goblin`
+    (get("lastCopyableMonster") !== $monster `sausage goblin`)
   ) {
-    throw "Sausage not ready for prof chain.";
+    if (myLevel() < 15) {
+      throw "Sausage not ready for prof chain.";
+    }
   } else {
     if (sausageFightGuaranteed()) {
       upkeepHp();
@@ -715,7 +718,7 @@ function doMoxTest() {
   BeachComb.tryHead($effect `Pomp & Circumsands`);
   if (have($item `runproof mascara`)) use($item `runproof mascara`);
   ensureEffect($effect`Quiet Desperation`);
-  // ensureEffect($effect`Disco Fever`);
+  ensureEffect($effect`Disco Fever`);
   ensureEffect($effect`Mariachi Mood`);
   cliExecute("retrocape moxie");
   // use($item `pocket maze`);
@@ -789,7 +792,7 @@ function doItemTest() {
   ensureEffect($effect `Steely-Eyed Squint`);
   ensureEffect($effect `Nearly All-Natural`); // bag of grain
   ensureEffect($effect `Feeling Lost`);
-  ensureEffect($effect `I See Everything Thrice!`); // government
+  // ensureEffect($effect `I See Everything Thrice!`); // government
   ensureEffect($effect `Glowing Hands`);
 
   useFamiliar($familiar `Trick-or-Treating Tot`);
@@ -839,7 +842,7 @@ function doWeaponTest() {
     use($item `corrupted marrow`);
   }
 
-  if (!CombatLoversLocket.monstersReminisced().includes($monster `black crayon pirate`)) {
+  if (!CombatLoversLocket.monstersReminisced().includes($monster `Black Crayon Pirate`)) {
     //TODO Change familiar
     Macro.skill($skill `Saucegeyser`)
       .repeat().setAutoAttack();
@@ -954,7 +957,7 @@ function doNonCombatTest() {
   if (myHp() < 30) useSkill(1, $skill `Cannelloni Cocoon`);
   equip($slot `acc3`, $item `Powerful Glove`);
 
-  shrug($effect `Moxious Madrigal`);
+  shrug($effect `The Moxious Madrigal`);
   ensureEffect($effect `Blood Bond`);
   ensureEffect($effect `Leash of Linguini`);
   ensureEffect($effect `Empathy`);
@@ -1049,17 +1052,8 @@ const tests: TestObject[] = [{
   },
 ];
 
-const parseInput = (input: string) => {
-  print("Parsing options");
-  if (input) {
-    for (const option of input.split(" ")) {}
-  }
-  print("Done parsing options");
-};
-
 export function main(input: string): void {
   setAutoAttack(0);
-  parseInput(input);
 
   const coilWireStatus = CommunityService.CoilWire.run(() => {
     setup();
