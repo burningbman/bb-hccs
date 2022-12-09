@@ -16,7 +16,6 @@ import {
   myAdventures,
   myBasestat,
   myBuffedstat,
-  myClass,
   myHp,
   myLevel,
   myMaxhp,
@@ -24,7 +23,6 @@ import {
   myMp,
   myThrall,
   numericModifier,
-  print,
   restoreMp,
   retrieveItem,
   runChoice,
@@ -37,7 +35,6 @@ import {
   visitUrl,
 } from "kolmafia";
 import {
-  $class,
   $effect,
   $familiar,
   $item,
@@ -63,10 +60,6 @@ import {
   SongBoom,
 } from "libram";
 import {
-  locket,
-  monstersReminisced
-} from "libram/dist/resources/2022/CombatLoversLocket";
-import {
   adventureWithCarolGhost,
   ensureItem,
   ensurePotionEffect,
@@ -75,6 +68,7 @@ import {
   ensureSong,
   mapMacro,
   multiFightAutoAttack,
+  printModtrace,
   pullIfPossible,
   sausageFightGuaranteed,
   setChoice,
@@ -85,9 +79,6 @@ import {
   useBestFamiliar,
   voterMonsterNow,
 } from "./lib";
-import {
-  modTraceList
-} from "./modtrace";
 
 enum TestEnum {
   HitPoints = CommunityService.HP.id,
@@ -331,8 +322,7 @@ function setup() {
   setChoice(1387, 3); // set saber to drop items
 
   // Upgrade saber for fam wt
-  visitUrl("main.php?action=may4");
-  runChoice(4);
+  cliExecute('saber fam');
 
   // pull and use borrowed time
   if (
@@ -702,6 +692,7 @@ function doHpTest() {
   ensurePotionEffect($effect `Expert Oiliness`, $item `oil of expertise`);
   cliExecute("retrocape muscle");
   handleOutfit(tests.find((test) => test.id === TestEnum.HitPoints));
+  printModtrace(["Maximum HP", "Maximum HP Percent"]);
 }
 
 function doMoxTest() {
@@ -730,8 +721,7 @@ function doMoxTest() {
   handleOutfit(tests.find((test) => test.id === TestEnum.MOX));
 
 
-  modTraceList("moxie");
-  modTraceList("moxie percent");
+  printModtrace(["Moxie", "Moxie Percent"]);
 }
 
 function doMusTest() {
@@ -752,8 +742,7 @@ function doMusTest() {
   cliExecute("retrocape muscle");
   handleOutfit(tests.find((test) => test.id === TestEnum.MUS));
 
-  modTraceList("muscle");
-  modTraceList("muscle percent");
+  printModtrace(['Muscle', 'Muscle Percent']);
 }
 
 function doItemTest() {
@@ -799,6 +788,7 @@ function doItemTest() {
   equip($item `li'l ninja costume`);
   cliExecute("fold wad of used tape");
   handleOutfit(tests.find((test) => test.id === TestEnum.ITEM));
+  printModtrace(["Item Drop", "Booze Drop"]);
 }
 
 function doFamiliarTest() {
@@ -822,6 +812,7 @@ function doFamiliarTest() {
     if (handlingChoice()) runChoice(3);
   }
   handleOutfit(tests.find((test) => test.id === TestEnum.FAMILIAR));
+  printModtrace("Familiar Weight");
 }
 
 function doWeaponTest() {
@@ -874,6 +865,7 @@ function doWeaponTest() {
   SongBoom.setSong("These Fists Were Made for Punchin'");
   cliExecute("fold broken champagne bottle");
   handleOutfit(tests.find((test) => test.id === TestEnum.WEAPON));
+  printModtrace(["Weapon Damage", "Weapon Damage Percent"]);
 }
 
 function doSpellTest() {
@@ -922,6 +914,7 @@ function doSpellTest() {
     ensurePotionEffect($effect `Concentration`, $item `cordial of concentration`);
   }
   handleOutfit(tests.find((test) => test.id === TestEnum.SPELL));
+  printModtrace(["Spell Damage", "Spell Damage Percent"]);
 
   return 1; // 1 adventure spent using simmer
 }
@@ -949,6 +942,7 @@ function doHotResTest() {
 
   cliExecute("retrocape vampire hold");
   handleOutfit(tests.find((test) => test.id === TestEnum.HOT_RES));
+  printModtrace("Hot Resistance");
 }
 
 function doNonCombatTest() {
@@ -977,6 +971,7 @@ function doNonCombatTest() {
     visitUrl("shop.php?whichshop=fwshop&action=buyitem&quantity=1&whichrow=1249&pwd", true, true);
   }
   handleOutfit(tests.find((test) => test.id === TestEnum.NONCOMBAT));
+  printModtrace("Combat Rate");
 }
 
 const tests: TestObject[] = [{
@@ -990,6 +985,7 @@ const tests: TestObject[] = [{
     spreadsheetTurns: 1,
     test: CommunityService.Mysticality,
     doTestPrep: () => {
+      printModtrace(["Mysticality", "Mysticality Percent"]);
       return;
     },
   },
