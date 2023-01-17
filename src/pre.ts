@@ -11,7 +11,7 @@ const PVP_STANCE: { [key: string]: string } = {
   bear: "Maul Power",
   pirate: "Smellin' Like a Stinkin' Rose",
   glitch: "Installation Wizard",
-  numeric: "Fahrenheit 451"
+  numeric: "A Nice Cold One"
 };
 
 const getTarget = () => {
