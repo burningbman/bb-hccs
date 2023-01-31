@@ -4,28 +4,21 @@ import {
   availableAmount,
   buy,
   buyUsingStorage,
-  chatPrivate,
   choiceFollowsFight,
   cliExecute,
   cliExecuteOutput,
   create,
-  eat,
   Effect,
   equip,
   equippedItem,
   familiarWeight,
-  getClanName,
   getProperty,
-  handlingChoice,
   haveEffect,
-  haveSkill,
   inMultiFight,
   Item,
   Location,
   Monster,
   myFamiliar,
-  myMaxmp,
-  myMp,
   print,
   pullsRemaining,
   retrieveItem,
@@ -47,7 +40,6 @@ import {
   useFamiliar,
   useSkill,
   visitUrl,
-  wait,
   weightAdjustment,
 } from "kolmafia";
 import {
@@ -56,15 +48,12 @@ import {
   $familiar,
   $item,
   $location,
-  $monster,
   $skill,
   $slot,
-  Clan,
   ensureEffect,
   get,
   have,
   Macro,
-  property,
   set,
 } from "libram";
 
@@ -130,8 +119,8 @@ export function ensureHermitItem(quantity: number, it: Item): void {
   const count = quantity - availableAmount(it);
   while (
     availableAmount($item`worthless trinket`) +
-      availableAmount($item`worthless gewgaw`) +
-      availableAmount($item`worthless knick-knack`) <
+    availableAmount($item`worthless gewgaw`) +
+    availableAmount($item`worthless knick-knack`) <
     count
   ) {
     ensureItem(1, $item`chewing gum on a string`);
@@ -293,7 +282,7 @@ export function adventureWithCarolGhost(effect: Effect, macro?: Macro): void {
     have($effect`Do You Crush What I Crush?`) ||
     have(
       $effect`Let It Snow/Boil/Stink/Frighten/Grease` ||
-        have($effect`Crimbo Wrapping`)
+      have($effect`Crimbo Wrapping`)
     )
   ) {
     // allow carol ghosting again if getting same effect and have a custom macro
@@ -407,33 +396,6 @@ export function useBestFamiliar(): void {
     useFamiliar($familiar`Shorter-Order Cook`);
   } else {
     useFamiliar($familiar`Shorter-Order Cook`);
-  }
-}
-
-function checkFax(monster: Monster): boolean {
-  const curClan = getClanName();
-  if (monster === $monster`ungulith`) Clan.join("Beldungeon");
-  cliExecute("fax receive");
-  if (monster === $monster`ungulith`) Clan.join(curClan);
-  if (
-    property.getString("photocopyMonster").toLowerCase() ===
-    monster.name.toLowerCase()
-  ) {
-    return true;
-  }
-  cliExecute("fax send");
-  return false;
-}
-
-export function fax(monster: Monster): void {
-  if (!get("_photocopyUsed")) {
-    if (checkFax(monster)) return;
-    chatPrivate("cheesefax", monster.name);
-    for (let i = 0; i < 3; i++) {
-      wait(5 + i);
-      if (checkFax(monster)) return;
-    }
-    abort(`Failed to acquire photocopied ${monster.name}.`);
   }
 }
 

@@ -1,5 +1,4 @@
-import { Class, containsText, print, pvpAttacksLeft, visitUrl } from "kolmafia";
-import { $class, $item, ascend, Lifestyle, Path, Paths } from "libram";
+import { containsText, print, pvpAttacksLeft, visitUrl } from "kolmafia";
 
 if (pvpAttacksLeft() > 0) {
   print("Run hccs_pre first, dingus.", "red");

@@ -9,7 +9,9 @@ import {
   equip,
   equippedItem,
   gametimeToInt,
+  getCampground,
   getProperty,
+  getWorkshed,
   handlingChoice,
   haveEffect,
   haveSkill,
@@ -59,6 +61,7 @@ import {
   Requirement,
   set,
   SongBoom,
+  TrainSet
 } from "libram";
 import {
   adventureWithCarolGhost,
@@ -116,7 +119,7 @@ const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
   .trySkill($skill`Barrage of Tears`)
   .trySkill($skill`Beach Combo`)
   .trySkill($skill`Spittoon Monsoon`)
-  .skill($skill`Saucestorm`)
+  .attack()
   .repeat();
 
 const PROF_MACRO = Macro.skill($skill`Curse of Weaksauce`)
@@ -132,11 +135,12 @@ const PROF_MACRO = Macro.skill($skill`Curse of Weaksauce`)
 const NEP_MACRO = Macro.skill($skill`Curse of Weaksauce`)
   .skill($skill`Entangling Noodles`)
   .skill($skill`Micrometeorite`)
-  .skill($skill`Barrage of Tears`)
+  .trySkill($skill`Barrage of Tears`)
   .skill($skill`Sing Along`)
   .trySkill($skill`Bowl Sideways`)
-  .skill($skill`Spittoon Monsoon`)
-  .skill($skill`Saucestorm`);
+  .trySkill($skill`Spittoon Monsoon`)
+  .skill($skill`Saucestorm`)
+  .repeat();
 
 function handleOutfit(test: TestObject | undefined) {
   if (!test) return;
@@ -172,7 +176,10 @@ function ensureMeteorShowerAndCarolGhostEffect() {
 
 function upkeepHp() {
   if (myHp() < 0.8 * myMaxhp()) {
-    cliExecute("hottub");
+    if (get('_hotTubSoaks') < 5)
+      cliExecute("hottub");
+    else
+      useSkill($skill`Cannelloni Cocoon`);
   }
 }
 
@@ -210,7 +217,14 @@ function doVotingMonster() {
   if (voterMonsterNow()) {
     const acc3 = equippedItem($slot`acc3`);
     equip($item`"I Voted!" sticker`, $slot`acc3`);
-    adventureMacro($location`Noob Cave`, GOD_LOB_MACRO);
+    adventureMacro($location`Noob Cave`, Macro.skill($skill`Curse of Weaksauce`)
+      .skill($skill`Entangling Noodles`)
+      .skill($skill`Micrometeorite`)
+      .trySkill($skill`Barrage of Tears`)
+      .skill($skill`Sing Along`)
+      .trySkill($skill`Spittoon Monsoon`)
+      .skill($skill`Saucestorm`)
+      .repeat());
     equip(acc3, $slot`acc3`);
   }
 }
@@ -295,6 +309,16 @@ function setup() {
   autosell(5, $item`baconstone`);
   autosell(5, $item`porquoise`);
   autosell(5, $item`hamethyst`);
+
+  use(toItem(`model train set`));
+  TrainSet.setConfiguration([TrainSet.Station.WATER_BRIDGE,
+  TrainSet.Station.VIEWING_PLATFORM,
+  TrainSet.Station.BRAIN_SILO,
+  TrainSet.Station.COAL_HOPPER,
+  TrainSet.Station.GAIN_MEAT,
+  TrainSet.Station.CANDY_FACTORY,
+  TrainSet.Station.ORE_HOPPER,
+  TrainSet.Station.TRACKSIDE_DINER]);
 
   set("autoSatisfyWithNPCs", true);
   set("autoSatisfyWithCoinmasters", true);
@@ -526,20 +550,24 @@ function doFreeFights() {
   ensureEffect($effect`Stevedave's Shanty of Superiority`);
   ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
 
+  equip($item`Fourth of May Cosplay Saber`);
   godLob();
   useBestFamiliar();
 
   // kill the mushroom
-  if (get("_mushroomGardenFights") === 0) {
+  if (getCampground()[$item`packet of mushroom spores`.name] && get("_mushroomGardenFights") === 0) {
     ensureSaucestormMana();
     adventureMacro(
       $location`Your Mushroom Garden`,
-      Macro.skill($skill`Barrage of Tears`)
-        .skill($skill`Spittoon Monsoon`)
-        .skill($skill`Saucestorm`)
+      Macro.trySkill($skill`Barrage of Tears`)
+        .trySkill($skill`Spittoon Monsoon`)
+        .attack()
         .repeat()
     );
   }
+
+  // unequip saber
+  equipStatOutfit();
 
   // const reminisced = CombatLoversLocket.monstersReminisced();
   // if (!reminisced.includes($monster `government agent`)) {
@@ -592,30 +620,30 @@ function doFreeFights() {
     }
 
     // Professor chain goblins
-    if (get("_pocketProfessorLectures") === 0) {
-      useFamiliar($familiar`Pocket Professor`);
-      ensureEffect($effect`Empathy`);
+    // if (get("_pocketProfessorLectures") === 0) {
+    //   useFamiliar($familiar`Pocket Professor`);
+    //   ensureEffect($effect`Empathy`);
 
-      new Requirement(["familiar weight"], {
-        forceEquip: [
-          ...$items`backup camera, makeshift garbage shirt`,
-          UMBRELLA,
-        ],
-      }).maximize();
+    //   new Requirement(["familiar weight"], {
+    //     forceEquip: [
+    //       ...$items`backup camera, makeshift garbage shirt`,
+    //       UMBRELLA,
+    //     ],
+    //   }).maximize();
 
-      // need 2 adventures to lecture on relativity
-      if (myAdventures() < 2) eat(2 - myAdventures(), $item`magical sausage`);
+    //   // need 2 adventures to lecture on relativity
+    //   if (myAdventures() < 2) eat(2 - myAdventures(), $item`magical sausage`);
 
-      adventureMacroAuto(
-        $location`The Neverending Party`,
-        Macro.if_(
-          '!monstername "sausage goblin"',
-          Macro.skill($skill`Back-Up to your Last Enemy`)
-        ).step(PROF_MACRO)
-      );
+    //   adventureMacroAuto(
+    //     $location`The Neverending Party`,
+    //     Macro.if_(
+    //       '!monstername "sausage goblin"',
+    //       Macro.skill($skill`Back-Up to your Last Enemy`)
+    //     ).step(PROF_MACRO)
+    //   );
 
-      upkeepHpAndMp();
-    }
+    //   upkeepHpAndMp();
+    // }
 
     // use back-ups in NEP
     equipStatOutfit();
@@ -1094,21 +1122,6 @@ export function main(input: string): void {
   runTest(TestEnum.WEAPON);
   runTest(TestEnum.SPELL);
   runTest(TestEnum.ITEM);
-
-  // Mysticality.run(function () { }, false, 1); //eslint-disable-line
-  // HP.run(doHpTest, false, 1);
-  // Muscle.run(doMusTest, false, 1);
-  // Moxie.run(doMoxTest, false, 1);
-
-  // useFamiliar($familiar`Exotic Parrot`);
-  // equip($slot`familiar`, $item`cracker`);
-
-  // HotRes.run(doHotResTest, false, 1);
-  // FamiliarWeight.run(doFamiliarTest, false, 37);
-  // WeaponDamage.run(doWeaponTest, false, 1);
-  // SpellDamage.run(doSpellTest, false, 33);
-  // Noncombat.run(doNonCombatTest, false, 1);
-  // BoozeDrop.run(doItemTest, false, 1);
 
   CommunityService.printLog("green");
   CommunityService.donate();
