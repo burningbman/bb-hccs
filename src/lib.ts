@@ -10,6 +10,7 @@ import {
   create,
   Effect,
   equip,
+  equippedAmount,
   equippedItem,
   familiarWeight,
   getProperty,
@@ -28,6 +29,7 @@ import {
   setProperty,
   shopAmount,
   Skill,
+  Slot,
   storageAmount,
   sweetSynthesis,
   takeShop,
@@ -389,7 +391,6 @@ export function useBestFamiliar(): void {
   if (get("camelSpit") !== 100) {
     useFamiliar($familiar`Melodramedary`);
     equip($slot`familiar`, $item`dromedary drinking helmet`);
-    cliExecute("mummery myst");
   } else if (get("_hipsterAdv") < 7) {
     useFamiliar($familiar`Artistic Goth Kid`);
   } else if (!have($item`short stack of pancakes`)) {
@@ -563,5 +564,13 @@ export function printModtrace(modifiers: string | string[], baseModifier?: strin
 
       print(`Total ${baseModifier}: ${total.toFixed(1)}`, "blue");
     }
+  }
+}
+
+export function unequip(item: Item): void {
+  while (equippedAmount(item) > 0) {
+    const slot = Slot.all().find((equipmentSlot) => equippedItem(equipmentSlot) === item);
+    if (!slot) return;
+    equip(slot, $item`none`);
   }
 }

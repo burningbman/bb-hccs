@@ -14,6 +14,7 @@ import {
   getWorkshed,
   handlingChoice,
   haveEffect,
+  haveEquipped,
   haveSkill,
   myAdventures,
   myBasestat,
@@ -23,6 +24,7 @@ import {
   myMaxhp,
   myMeat,
   myMp,
+  mySign,
   myThrall,
   numericModifier,
   restoreMp,
@@ -57,12 +59,13 @@ import {
   ensureEffect,
   get,
   have,
-  Macro,
   Requirement,
   set,
   SongBoom,
+  SourceTerminal,
   TrainSet
 } from "libram";
+import { Macro } from "./combatMacros";
 import {
   adventureWithCarolGhost,
   ensureItem,
@@ -80,6 +83,7 @@ import {
   synthExp,
   synthItem,
   tryUse,
+  unequip,
   useBestFamiliar,
   voterMonsterNow,
 } from "./lib";
@@ -107,40 +111,6 @@ interface TestObject {
     (): void
   };
 }
-
-const UMBRELLA = toItem(10899);
-
-const foldUmbrella = (choice: number) => {
-  visitUrl("inventory.php?action=useumbrella");
-  runChoice(choice);
-};
-
-const GOD_LOB_MACRO = Macro.trySkill($skill`Curse of Weaksauce`)
-  .trySkill($skill`Barrage of Tears`)
-  .trySkill($skill`Beach Combo`)
-  .trySkill($skill`Spittoon Monsoon`)
-  .attack()
-  .repeat();
-
-const PROF_MACRO = Macro.skill($skill`Curse of Weaksauce`)
-  .skill($skill`Entangling Noodles`)
-  .skill($skill`Micrometeorite`)
-  .trySkill($skill`Barrage of Tears`)
-  .trySkill($skill`Bowl Sideways`)
-  .trySkill($skill`lecture on relativity`)
-  .trySkill($skill`Spittoon Monsoon`)
-  .trySkill($skill`Beach Combo`)
-  .skill($skill`Saucegeyser`);
-
-const NEP_MACRO = Macro.skill($skill`Curse of Weaksauce`)
-  .skill($skill`Entangling Noodles`)
-  .skill($skill`Micrometeorite`)
-  .trySkill($skill`Barrage of Tears`)
-  .skill($skill`Sing Along`)
-  .trySkill($skill`Bowl Sideways`)
-  .trySkill($skill`Spittoon Monsoon`)
-  .skill($skill`Saucestorm`)
-  .repeat();
 
 function handleOutfit(test: TestObject | undefined) {
   if (!test) return;
@@ -202,11 +172,7 @@ function doGuaranteedGoblin() {
         '!monstername "sausage goblin"',
         new Macro().step("abort")
       ).step(
-        Macro.trySkill($skill`Barrage of Tears`)
-          .trySkill($skill`Spittoon Monsoon`)
-          .trySkill($skill`Beach Combo`)
-          .skill($skill`Saucestorm`)
-          .repeat()
+        Macro.itemSkills().easyFight().kill()
       )
     );
     equip(offHand);
@@ -217,25 +183,14 @@ function doVotingMonster() {
   if (voterMonsterNow()) {
     const acc3 = equippedItem($slot`acc3`);
     equip($item`"I Voted!" sticker`, $slot`acc3`);
-    adventureMacro($location`Noob Cave`, Macro.skill($skill`Curse of Weaksauce`)
-      .skill($skill`Entangling Noodles`)
-      .skill($skill`Micrometeorite`)
-      .trySkill($skill`Barrage of Tears`)
-      .skill($skill`Sing Along`)
-      .trySkill($skill`Spittoon Monsoon`)
-      .skill($skill`Saucestorm`)
-      .repeat());
+    adventureMacro($location`Noob Cave`, Macro.default());
     equip(acc3, $slot`acc3`);
   }
 }
 
 function doAutumnaton() {
   if (AutumnAton.available()) {
-    let loc = $location`The Sleazy Back Alley`;
-    if (!have($item`autumn-spice donut`)) {
-      loc = $location`The Haunted Kitchen`;
-    }
-    AutumnAton.sendTo(loc);
+    AutumnAton.sendTo($location`The Sleazy Back Alley`);
   }
 }
 
@@ -265,18 +220,19 @@ const getBatteries = () => {
 
 const ensureDeepDarkVisions = () => {
   if (have($effect`Visions of the Deep Dark Deeps`)) return;
-  // Deep Dark Visions
+
+  BeachComb.tryHead($effect`Does It Have a Skull In There??`);
   useFamiliar($familiar`Exotic Parrot`);
   ensureEffect($effect`Feeling Peaceful`);
   cliExecute("retrocape vampire hold");
 
   upkeepHpAndMp();
   if (Math.round(numericModifier("spooky resistance")) < 10) {
-    ensureEffect($effect`Does It Have a Skull In There??`);
     if (Math.round(numericModifier("spooky resistance")) < 10) {
       throw "Not enough spooky res for Deep Dark Visions.";
     }
   }
+
   useSkill(1, $skill`Deep Dark Visions`);
 };
 
@@ -291,10 +247,10 @@ function vote() {
 }
 
 function equipStatOutfit() {
-  foldUmbrella(1);
+  cliExecute('umbrella ml');
   new Requirement(
     ["100 mysticality experience percent, mysticality experience"], {
-    forceEquip: [$item`makeshift garbage shirt`, UMBRELLA],
+    forceEquip: [$item`makeshift garbage shirt`, $item`unbreakable umbrella`],
   }
   ).maximize();
 }
@@ -310,15 +266,17 @@ function setup() {
   autosell(5, $item`porquoise`);
   autosell(5, $item`hamethyst`);
 
-  use(toItem(`model train set`));
-  TrainSet.setConfiguration([TrainSet.Station.WATER_BRIDGE,
-  TrainSet.Station.VIEWING_PLATFORM,
-  TrainSet.Station.BRAIN_SILO,
-  TrainSet.Station.COAL_HOPPER,
-  TrainSet.Station.GAIN_MEAT,
-  TrainSet.Station.CANDY_FACTORY,
-  TrainSet.Station.ORE_HOPPER,
-  TrainSet.Station.TRACKSIDE_DINER]);
+  if (getCampground()[$item`model train set`.name] === 0) {
+    use(toItem(`model train set`));
+    TrainSet.setConfiguration([TrainSet.Station.WATER_BRIDGE,
+    TrainSet.Station.VIEWING_PLATFORM,
+    TrainSet.Station.BRAIN_SILO,
+    TrainSet.Station.COAL_HOPPER,
+    TrainSet.Station.GAIN_MEAT,
+    TrainSet.Station.CANDY_FACTORY,
+    TrainSet.Station.ORE_HOPPER,
+    TrainSet.Station.TRACKSIDE_DINER]);
+  }
 
   set("autoSatisfyWithNPCs", true);
   set("autoSatisfyWithCoinmasters", true);
@@ -348,17 +306,27 @@ function setup() {
     }
   }
 
+  // unlock shops
+  visitUrl("shop.php?whichshop=meatsmith&action=talk");
+  runChoice(1);
+  visitUrl("shop.php?whichshop=doc&action=talk");
+  runChoice(1);
+  visitUrl("shop.php?whichshop=armory&action=talk");
+  runChoice(1);
+
+  use(toItem('S.I.T. Course Completion Certificate'));
+
   pullIfPossible(1, $item`cracker`, 2000);
   pullIfPossible(1, $item`dromedary drinking helmet`, 2000);
-  pullIfPossible(1, $item`Staff of Simmering Hatred`, 100);
+  pullIfPossible(1, $item`green mana`, 10000);
 }
 
-function getPizzaIngredients() {
+function preCoilWireFights() {
   if (have($item`cherry`) || CommunityService.CoilWire.isDone()) return;
 
   new Requirement(
     ["100 mysticality experience percent, mysticality experience, ML"], {
-    forceEquip: [...$items`Daylight Shavings Helmet`, UMBRELLA], // Setup PM to get 2nd buff after coiling wire
+    forceEquip: [...$items`Daylight Shavings Helmet`, $item`unbreakable umbrella`], // Setup PM to get 2nd buff after coiling wire
     preventEquip: $items`makeshift garbage shirt`, // Save exp boosts for scalers
   }
   ).maximize();
@@ -367,45 +335,6 @@ function getPizzaIngredients() {
   if (myHp() < myMaxhp()) {
     useSkill($skill`Cannelloni Cocoon`);
   }
-
-  // tomato and li'l ninja outfit (Nostalgia + Envy + X-Ray)
-  equip($slot`acc3`, $item`Lil' Doctor™ bag`);
-  if (!have($item`tomato`)) {
-    mapMacro(
-      $location`The Haunted Pantry`,
-      $monster`possessed can of tomatoes`,
-      Macro.if_(
-        `monsterid ${$monster`possessed can of tomatoes`.id}`,
-        Macro.skill($skill`Feel Hatred`)
-      )
-    );
-
-    mapMacro(
-      $location`The Haiku Dungeon`,
-      $monster`amateur ninja`,
-      Macro.if_(
-        `monsterid ${$monster`amateur ninja`.id}`,
-        Macro.skill($skill`Feel Nostalgic`)
-          .skill($skill`Feel Envy`)
-          .skill($skill`Chest X-Ray`)
-      ).step("abort")
-    );
-  }
-
-  // Cherry and grapefruit in skeleton store (Envy + X-Ray)
-  if (getProperty("questM23Meatsmith") === "unstarted") {
-    visitUrl("shop.php?whichshop=meatsmith&action=talk");
-    runChoice(1);
-  }
-
-  mapMacro(
-    $location`The Skeleton Store`,
-    $monster`novelty tropical skeleton`,
-    Macro.if_(
-      `monsterid ${$monster`novelty tropical skeleton`.id}`,
-      Macro.skill($skill`Feel Envy`).skill($skill`Chest X-Ray`)
-    ).step("abort")
-  );
 }
 
 function useStatGains() {
@@ -420,10 +349,6 @@ function useStatGains() {
   ensureEffect($effect`Inscrutable Gaze`);
   ensureEffect($effect`Thaumodynamic`);
   synthExp();
-  // ensurePullEffect(
-  //   $effect`Different Way of Seeing Things`,
-  //   $item`non-Euclidean angle`
-  // );
 
   if (Math.round(numericModifier("mysticality experience percent")) < 100) {
     throw "Insufficient +stat%.";
@@ -440,7 +365,7 @@ function useStatGains() {
 function buffBeforeGoblins() {
   if (have($effect`You Learned Something Maybe!`) || myLevel() >= 13) return;
   equip($slot`acc3`, $item`Powerful Glove`);
-  use($item`MayDay™ supply package`);
+  tryUse(1, $item`MayDay™ supply package`);
 
   // craft potions after eating to ensure we have adventures
   if (!get("hasRange")) {
@@ -453,14 +378,7 @@ function buffBeforeGoblins() {
     use(1, $item`Dramatic™ range`);
   }
 
-  if (haveSkill($skill`Advanced Saucecrafting`))
-    useSkill(1, $skill`Advanced Saucecrafting`);
-  ensurePotionEffect(
-    $effect`Tomato Power`,
-    $item`tomato juice of powerful power`
-  );
-  ensurePotionEffect($effect`Mystically Oiled`, $item`ointment of the occult`);
-
+  ensureEffect($effect`Giant Growth`);
   ensureEffect($effect`Favored by Lyle`);
   ensureEffect($effect`Starry-Eyed`);
   ensureEffect($effect`Triple-Sized`);
@@ -471,7 +389,6 @@ function buffBeforeGoblins() {
   if (myThrall() !== $thrall`Spaghetti Elemental`) {
     useSkill(1, $skill`Bind Spaghetti Elemental`);
   }
-  // ensureEffect($effect`Hulkien`);
 
   // Plan is for these buffs to fall all the way through to hot res -> fam weight.
   ensureEffect($effect`Fidoxene`);
@@ -488,13 +405,14 @@ function fightGodLob() {
   upkeepHp();
   ensureSaucestormMana();
   visitUrl("main.php?fightgodlobster=1");
-  runCombat(GOD_LOB_MACRO.toString());
+  runCombat(Macro.delevel().itemSkills().attack().repeat().toString());
   multiFightAutoAttack();
   runChoice(-1);
 }
 
 function godLob() {
   if (get("_godLobsterFights") === 0) {
+    equip($item`Fourth of May Cosplay Saber`);
     useFamiliar($familiar`God Lobster`);
     setChoice(1310, 1);
     fightGodLob();
@@ -550,33 +468,38 @@ function doFreeFights() {
   ensureEffect($effect`Stevedave's Shanty of Superiority`);
   ensureEffect($effect`Ur-Kel's Aria of Annoyance`);
 
-  equip($item`Fourth of May Cosplay Saber`);
-  godLob();
-  useBestFamiliar();
-
-  // kill the mushroom
-  if (getCampground()[$item`packet of mushroom spores`.name] && get("_mushroomGardenFights") === 0) {
-    ensureSaucestormMana();
-    adventureMacro(
-      $location`Your Mushroom Garden`,
-      Macro.trySkill($skill`Barrage of Tears`)
-        .trySkill($skill`Spittoon Monsoon`)
-        .attack()
-        .repeat()
+  // li'l ninja costume  
+  if (!have($item`li'l ninja costume`)) {
+    equip($slot`acc3`, $item`Lil' Doctor™ bag`);
+    mapMacro(
+      $location`The Haiku Dungeon`,
+      $monster`amateur ninja`,
+      Macro.if_(
+        `monsterid ${$monster`amateur ninja`.id}`,
+        Macro.skill($skill`Feel Envy`)
+          .skill($skill`Chest X-Ray`)
+      ).step("abort")
     );
   }
 
+  if (get('_speakeasyFreeFights', 0) === 0) {
+    // speakeasy
+    useBestFamiliar();
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.default()); // use first free kill
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.skill($skill`Portscan`).default()); // setup portscan
+
+    // kill gov't agent with last speakeasy free kill
+    equip($item`Lil' Doctor™ bag`);
+    equip($item`vampyric cloake`);
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`,
+      Macro.skill($skill`Become a Bat`).skill($skill`Otoscope`).skill($skill`Portscan`).default());
+  }
+
+  godLob();
+  useBestFamiliar();
+
   // unequip saber
   equipStatOutfit();
-
-  // const reminisced = CombatLoversLocket.monstersReminisced();
-  // if (!reminisced.includes($monster `government agent`)) {
-  //   Macro.skill($skill `Feel Envy`)
-  //     .skill($skill `Gingerbread Mob Hit`).setAutoAttack();
-  //   cliExecute("reminisce government agent");
-  //   setAutoAttack(0);
-  // }
-
   setupNEP();
 
   // Use 10 NEP free kills
@@ -588,7 +511,7 @@ function doFreeFights() {
       Macro.externalIf(
         get("_neverendingPartyFreeTurns") > 0, // make sure bowling sideways before feel pride
         Macro.trySkill($skill`Feel Pride`)
-      ).step(NEP_MACRO)
+      ).default(true)
     );
     if (
       get("lastEncounter").includes("Gone Kitchin") ||
@@ -598,75 +521,14 @@ function doFreeFights() {
     }
   }
 
-  if (
-    !sausageFightGuaranteed() &&
-    (get("lastCopyableMonster") !== $monster`sausage goblin`)
-  ) {
-    if (myLevel() < 15) {
-      throw "Sausage not ready for prof chain.";
-    }
-  } else {
-    if (sausageFightGuaranteed()) {
-      upkeepHp();
-      equip($item`Kramco Sausage-o-Matic™`);
-
-      adventureMacro(
-        $location`The Neverending Party`,
-        Macro.if_(
-          '!monstername "sausage goblin"',
-          new Macro().step("abort")
-        ).step(NEP_MACRO)
-      );
-    }
-
-    // Professor chain goblins
-    // if (get("_pocketProfessorLectures") === 0) {
-    //   useFamiliar($familiar`Pocket Professor`);
-    //   ensureEffect($effect`Empathy`);
-
-    //   new Requirement(["familiar weight"], {
-    //     forceEquip: [
-    //       ...$items`backup camera, makeshift garbage shirt`,
-    //       UMBRELLA,
-    //     ],
-    //   }).maximize();
-
-    //   // need 2 adventures to lecture on relativity
-    //   if (myAdventures() < 2) eat(2 - myAdventures(), $item`magical sausage`);
-
-    //   adventureMacroAuto(
-    //     $location`The Neverending Party`,
-    //     Macro.if_(
-    //       '!monstername "sausage goblin"',
-    //       Macro.skill($skill`Back-Up to your Last Enemy`)
-    //     ).step(PROF_MACRO)
-    //   );
-
-    //   upkeepHpAndMp();
-    // }
-
-    // use back-ups in NEP
-    equipStatOutfit();
-    // equip($item`Kramco Sausage-o-Matic™`);
-    equip($item`backup camera`, $slot`acc3`);
-    while (get("_backUpUses") < 11) {
-      upkeepHp();
-      useBestFamiliar();
-      adventureMacro(
-        $location`The Neverending Party`,
-        Macro.if_(
-          "(monsterid 2104) || (monstername Black Crayon *)",
-          NEP_MACRO
-        ).skill($skill`Back-Up to your Last Enemy`)
-      );
-    }
-  }
-
   // Use other free kills
   equipStatOutfit();
-  // equip($item`Kramco Sausage-o-Matic™`);
   equip($slot`acc3`, $item`Lil' Doctor™ bag`);
   while (get("_shatteringPunchUsed") < 3 || get("_chestXRayUsed") < 3) {
+    if (!have($effect`Everything Looks Yellow`)) {
+      cliExecute('parka acid');
+      equip($item`Jurassic Parka`);
+    }
     useBestFamiliar();
     upkeepHpAndMp();
     adventureMacroAuto(
@@ -676,9 +538,12 @@ function doFreeFights() {
           "(monsterid 2104) || (monstername Black Crayon *)",
           new Macro().skill($skill`Saucegeyser`).repeat()
         )
+        .trySkill($skill`Spit jurassic acid`)
+        .trySkill($skill`Gingerbread Mob Hit`)
         .trySkill($skill`Shattering Punch`)
         .trySkill($skill`Chest X-Ray`)
     );
+    !haveEquipped($item`makeshift garbage shirt`) && equip($item`makeshift garbage shirt`);
   }
 
   ensureItem(1, $item`Desert Bus pass`);
@@ -693,7 +558,7 @@ function doFreeFights() {
 }
 
 function doHpTest() {
-  ensurePotionEffect($effect`Expert Oiliness`, $item`oil of expertise`);
+  useSkill($skill`Bind Undead Elbow Macaroni`);
   cliExecute("retrocape muscle");
   handleOutfit(tests.find((test) => test.id === TestEnum.HitPoints));
   printModtrace(["Maximum HP", "Maximum HP Percent"]);
@@ -703,8 +568,8 @@ function doMoxTest() {
   if (get("_horseryCrazyMox").indexOf("+") === 0) {
     cliExecute("horsery stat");
   }
-  ensurePotionEffect($effect`Expert Oiliness`, $item`oil of expertise`);
 
+  useSkill($skill`Bind Penne Dreadful`);
   ensureEffect($effect`Blessing of the Bird`); // SA/PM have moxie bird
   ensureEffect($effect`Big`);
   ensureEffect($effect`Song of Bravado`);
@@ -733,7 +598,7 @@ function doMusTest() {
     cliExecute("horsery stat");
   }
 
-  ensurePotionEffect($effect`Expert Oiliness`, $item`oil of expertise`);
+  useSkill($skill`Bind Undead Elbow Macaroni`);
 
   ensureEffect($effect`Big`);
   ensureEffect($effect`Song of Bravado`);
@@ -750,7 +615,7 @@ function doMusTest() {
 }
 
 function doItemTest() {
-  foldUmbrella(3);
+  cliExecute('umbrella item');
   ensureItem(1, $item`oversized sparkler`);
 
   if (!have($effect`Bat-Adjacent Form`)) {
@@ -776,7 +641,8 @@ function doItemTest() {
   ensureEffect($effect`Nearly All-Natural`); // bag of grain
   ensureEffect($effect`Feeling Lost`);
   ensureEffect($effect`Glowing Hands`);
-  // ensureEffect($effect`Crunching Leaves`);
+  ensureEffect($effect`Crunching Leaves`);
+  ensureEffect($effect`I See Everything Thrice!`);
 
   useFamiliar($familiar`Trick-or-Treating Tot`);
   equip($item`li'l ninja costume`);
@@ -796,6 +662,10 @@ function doFamiliarTest() {
   ensureEffect($effect`Empathy`);
 
   if (have($item`short stack of pancakes`)) use($item`short stack of pancakes`);
+  if (mySign() !== "Platypus") {
+    unequip($item`hewn moon-rune spoon`);
+    visitUrl("inv_use.php?whichitem=10254&pwd&doit=96&whichsign=4");
+  }
 
   if (!have($effect`Meteor Showered`)) {
     equip($item`Fourth of May Cosplay Saber`);
@@ -810,7 +680,7 @@ function doFamiliarTest() {
 }
 
 function doWeaponTest() {
-  foldUmbrella(4);
+  cliExecute('umbrella weapon');
   ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
 
   if (!haveEffect($effect`Cowrruption`)) {
@@ -863,7 +733,7 @@ function doWeaponTest() {
 }
 
 function doSpellTest() {
-  foldUmbrella(5);
+  cliExecute('umbrella spell');
   ensureDeepDarkVisions(); // should already have this from weapon test
 
   if (!have($effect`Saucefingers`)) {
@@ -941,7 +811,7 @@ function doHotResTest() {
 
 function doNonCombatTest() {
   cliExecute("horsery -combat");
-  foldUmbrella(6);
+  cliExecute('umbrella nc');
   if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
   equip($slot`acc3`, $item`Powerful Glove`);
 
@@ -1037,7 +907,7 @@ const tests: TestObject[] = [{
   test: CommunityService.CoilWire,
   doTestPrep: () => {
     setup();
-    getPizzaIngredients();
+    preCoilWireFights();
   },
 },
 ];
@@ -1080,6 +950,13 @@ function doDailies() {
   // Upgrade saber for fam wt
   cliExecute('saber fam');
 
+  useFamiliar($familiar`Melodramedary`);
+  cliExecute("mummery myst");
+
+  equip($familiar`Shorter-Order Cook`, $item`tiny stillsuit`);
+
+  SourceTerminal.educate([$skill`Extract`, $skill`Portscan`]);
+
   cliExecute(
     "pantogram mysticality|hot|drops of blood|some self-respect|your hopes|silent"
   );
@@ -1091,7 +968,7 @@ export function main(input: string): void {
 
   const coilWireStatus = CommunityService.CoilWire.run(() => {
     setup();
-    getPizzaIngredients();
+    preCoilWireFights();
     doGuaranteedGoblin();
     doVotingMonster();
   }, 60);
