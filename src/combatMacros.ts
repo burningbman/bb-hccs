@@ -1,6 +1,6 @@
 import { CombatStrategy } from "grimoire-kolmafia";
 import { myPrimestat } from "kolmafia";
-import { $skill, $skills, $stat, have, Macro as LibramMacro } from "libram";
+import { $skill, $skills, $stat, Macro as LibramMacro } from "libram";
 
 export class CSStrategy extends CombatStrategy {
     constructor(macro: () => Macro = () => Macro.kill()) {
@@ -34,8 +34,8 @@ export class Macro extends LibramMacro {
     kill(): Macro {
         return this.externalIf(
             myPrimestat() === $stat`Mysticality`,
-            this.trySkillRepeat($skill`Saucegeyser`),
-            this.attack().repeat()
+            Macro.trySkillRepeat($skill`Saucestorm`),
+            Macro.attack().repeat()
         );
     }
     static kill(): Macro {

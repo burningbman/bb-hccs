@@ -1,4 +1,4 @@
-import { availableAmount, cliExecute, pvpAttacksLeft, use } from "kolmafia";
+import { abort, availableAmount, cliExecute, pvpAttacksLeft, use } from "kolmafia";
 import { $item, get } from "libram";
 import { ensureItem } from "./lib";
 
@@ -11,7 +11,8 @@ const PVP_STANCE: { [key: string]: string } = {
   bear: "Maul Power",
   pirate: "Smellin' Like a Stinkin' Rose",
   glitch: "Installation Wizard",
-  numeric: "A Nice Cold One"
+  numeric: "A Nice Cold One",
+  ice: "A Nice Cold One"
 };
 
 const getTarget = () => {
@@ -23,13 +24,14 @@ const getTarget = () => {
   }
 };
 
+let noError = true;
+
 if (pvpAttacksLeft() > 0) {
-  cliExecute("uberpvpoptimizer");
-  cliExecute(`pvp ${getTarget()} ${PVP_STANCE[season]}`);
+  noError = cliExecute("uberpvpoptimizer");
+  noError = noError && cliExecute(`pvp ${getTarget()} ${PVP_STANCE[season]}`);
 }
 
 cliExecute("refresh inventory");
-if (get('questL02Larva') !== 'unstarted') {
-  ensureItem(1, $item`pixel star`);
-}
-// cliExecute('philter');
+ensureItem(1, $item`pixel star`);
+
+!noError && abort();

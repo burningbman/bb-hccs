@@ -8,15 +8,10 @@ import {
   eat,
   equip,
   equippedItem,
-  gametimeToInt,
   getCampground,
-  getProperty,
-  getWorkshed,
   handlingChoice,
   haveEffect,
   haveEquipped,
-  haveSkill,
-  myAdventures,
   myBasestat,
   myBuffedstat,
   myHp,
@@ -378,7 +373,6 @@ function buffBeforeGoblins() {
     use(1, $item`Dramatic™ range`);
   }
 
-  ensureEffect($effect`Giant Growth`);
   ensureEffect($effect`Favored by Lyle`);
   ensureEffect($effect`Starry-Eyed`);
   ensureEffect($effect`Triple-Sized`);
@@ -485,16 +479,17 @@ function doFreeFights() {
   if (get('_speakeasyFreeFights', 0) === 0) {
     // speakeasy
     useBestFamiliar();
-    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.default()); // use first free kill
-    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.skill($skill`Portscan`).default()); // setup portscan
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.easyFight().kill()); // use first free kill
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.skill($skill`Portscan`).easyFight().kill()); // setup portscan
 
     // kill gov't agent with last speakeasy free kill
     equip($item`Lil' Doctor™ bag`);
     equip($item`vampyric cloake`);
     adventureMacro($location`An Unusually Quiet Barroom Brawl`,
-      Macro.skill($skill`Become a Bat`).skill($skill`Otoscope`).skill($skill`Portscan`).default());
+      Macro.skill($skill`Giant Growth`).skill($skill`Become a Bat`).skill($skill`Otoscope`).kill());
   }
 
+  equipStatOutfit();
   godLob();
   useBestFamiliar();
 
