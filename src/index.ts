@@ -61,6 +61,8 @@ import {
   TrainSet
 } from "libram";
 import { Macro } from "./combatMacros";
+import { CSEngine } from "./engine";
+import ItemDrop from "./item";
 import {
   adventureWithCarolGhost,
   ensureItem,
@@ -76,7 +78,6 @@ import {
   setChoice,
   shrug,
   synthExp,
-  synthItem,
   tryUse,
   unequip,
   useBestFamiliar,
@@ -610,43 +611,6 @@ function doMusTest() {
   printModtrace(['Muscle', 'Muscle Percent']);
 }
 
-function doItemTest() {
-  cliExecute('umbrella item');
-  ensureItem(1, $item`oversized sparkler`);
-
-  if (!have($effect`Bat-Adjacent Form`)) {
-    equip($item`vampyric cloake`);
-    equip($slot`offhand`, $item`none`); // make sure no kramco
-    adventureMacro(
-      $location`The Dire Warren`,
-      Macro.trySkill($skill`Bowl Straight Up`)
-        .skill($skill`Become a Bat`)
-        .skill($skill`Feel Hatred`)
-    );
-  }
-
-  visitUrl("place.php?whichplace=desertbeach&action=db_nukehouse");
-
-  !get("_clanFortuneBuffUsed") && cliExecute("fortune buff item");
-
-  synthItem();
-  ensureEffect($effect`Singer's Faithful Ocelot`);
-  ensureEffect($effect`Fat Leon's Phat Loot Lyric`);
-  ensureEffect($effect`The Spirit of Taking`);
-  ensureEffect($effect`Steely-Eyed Squint`);
-  ensureEffect($effect`Nearly All-Natural`); // bag of grain
-  ensureEffect($effect`Feeling Lost`);
-  ensureEffect($effect`Glowing Hands`);
-  ensureEffect($effect`Crunching Leaves`);
-  ensureEffect($effect`I See Everything Thrice!`);
-
-  useFamiliar($familiar`Trick-or-Treating Tot`);
-  equip($item`li'l ninja costume`);
-  cliExecute("fold wad of used tape");
-  handleOutfit(tests.find((test) => test.id === TestEnum.ITEM));
-  printModtrace(["Item Drop", "Booze Drop"]);
-}
-
 function doFamiliarTest() {
   if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
 
@@ -851,7 +815,7 @@ const tests: TestObject[] = [{
 },
 {
   id: TestEnum.MUS,
-  spreadsheetTurns: 3,
+  spreadsheetTurns: 4,
   test: CommunityService.Muscle,
   doTestPrep: doMusTest,
 },
@@ -860,12 +824,6 @@ const tests: TestObject[] = [{
   spreadsheetTurns: 1,
   test: CommunityService.Moxie,
   doTestPrep: doMoxTest,
-},
-{
-  id: TestEnum.ITEM,
-  spreadsheetTurns: 1,
-  test: CommunityService.BoozeDrop,
-  doTestPrep: doItemTest,
 },
 {
   id: TestEnum.HOT_RES,
@@ -982,9 +940,10 @@ export function main(input: string): void {
     drink(6, $item`astral pilsner`);
   }
 
-  runTest(TestEnum.MYS);
-  runTest(TestEnum.HitPoints);
+
   runTest(TestEnum.MUS);
+  runTest(TestEnum.HitPoints);
+  runTest(TestEnum.MYS);
   runTest(TestEnum.MOX);
   runTest(TestEnum.NONCOMBAT);
 
@@ -994,7 +953,7 @@ export function main(input: string): void {
   runTest(TestEnum.FAMILIAR);
   runTest(TestEnum.WEAPON);
   runTest(TestEnum.SPELL);
-  runTest(TestEnum.ITEM);
+  CSEngine.runTests(ItemDrop);
 
   CommunityService.printLog("green");
   CommunityService.donate();
