@@ -464,6 +464,7 @@ function doFreeFights() {
 
   // li'l ninja costume  
   if (!have($item`li'l ninja costume`)) {
+    useBestFamiliar();
     equip($slot`acc3`, $item`Lil' Doctor™ bag`);
     mapMacro(
       $location`The Haiku Dungeon`,
@@ -479,8 +480,8 @@ function doFreeFights() {
   if (get('_speakeasyFreeFights', 0) === 0) {
     // speakeasy
     useBestFamiliar();
-    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.easyFight().kill()); // use first free kill
-    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.skill($skill`Portscan`).easyFight().kill()); // setup portscan
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.easyFight().attack().repeat()); // use first free kill
+    adventureMacro($location`An Unusually Quiet Barroom Brawl`, Macro.skill($skill`Portscan`).easyFight().attack().repeat()); // setup portscan
 
     // kill gov't agent with last speakeasy free kill
     equip($item`Lil' Doctor™ bag`);
