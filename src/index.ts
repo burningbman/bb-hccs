@@ -222,7 +222,7 @@ function setup() {
   autosell(5, $item`porquoise`);
   autosell(5, $item`hamethyst`);
 
-  if (getCampground()[$item`model train set`.name] === 0) {
+  if (getCampground()[$item`model train set`.name] !== 1) {
     use(toItem(`model train set`));
     TrainSet.setConfiguration([TrainSet.Station.COAL_HOPPER,
     TrainSet.Station.BRAIN_SILO,
