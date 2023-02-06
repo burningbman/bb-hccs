@@ -130,7 +130,7 @@ export class CSEngine extends Engine<never, Task> {
     static runTests(...quests: CSQuest[]): void {
         // if (myPath() !== $path`Community Service`) abort();
         // visitUrl("council.php");
-        // CSEngine.initiate();
+        CSEngine.initiate();
 
         try {
             for (const quest of quests) {
@@ -142,11 +142,11 @@ export class CSEngine extends Engine<never, Task> {
                 }
             }
 
-            CommunityService.printLog();
+            CommunityService.printLog('green');
             CommunityService.donate();
             cliExecute("refresh all");
-            cliExecute(get("kingLiberatedScript"));
             uneffect($effect`Feeling Lost`);
+            cliExecute(get("kingLiberatedScript"));
 
             if (get("_cloudTalkSmoker")) {
                 print(

@@ -159,6 +159,7 @@ function upkeepHpAndMp() {
 function doGuaranteedGoblin() {
   // kill a kramco for the sausage before coiling wire
   if (!haveEffect($effect`Feeling Lost`) && sausageFightGuaranteed()) {
+    useBestFamiliar();
     ensureSaucestormMana();
     const offHand = equippedItem($slot`off-hand`);
     equip($item`Kramco Sausage-o-Matic™`);
@@ -264,14 +265,14 @@ function setup() {
 
   if (getCampground()[$item`model train set`.name] === 0) {
     use(toItem(`model train set`));
-    TrainSet.setConfiguration([TrainSet.Station.WATER_BRIDGE,
-    TrainSet.Station.VIEWING_PLATFORM,
+    TrainSet.setConfiguration([TrainSet.Station.COAL_HOPPER,
     TrainSet.Station.BRAIN_SILO,
-    TrainSet.Station.COAL_HOPPER,
+    TrainSet.Station.VIEWING_PLATFORM,
+    TrainSet.Station.WATER_BRIDGE,
+    TrainSet.Station.BRAWN_SILO,
+    TrainSet.Station.GROIN_SILO,
     TrainSet.Station.GAIN_MEAT,
-    TrainSet.Station.CANDY_FACTORY,
-    TrainSet.Station.ORE_HOPPER,
-    TrainSet.Station.TRACKSIDE_DINER]);
+    TrainSet.Station.CANDY_FACTORY]);
   }
 
   set("autoSatisfyWithNPCs", true);

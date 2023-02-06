@@ -17,7 +17,8 @@ const ItemDrop: CSQuest = {
     maxTurns: 1,
     modifiers: MODIFIERS,
     tasks: [{
-        name: "Batform",
+        name: "Bowling Ball & Batform",
+        ready: () => !get('_latteBanishUsed'),
         completed: () => have($effect`Bat-Adjacent Form`),
         do: $location`The Dire Warren`,
         outfit: () =>
@@ -29,7 +30,7 @@ const ItemDrop: CSQuest = {
                 canAttack: false,
             }),
         combat: new CSStrategy(() =>
-            Macro.skill($skill`Become a Bat`).skill($skill`Throw Latte on Opponent`)
+            Macro.skill($skill`Bowl Straight Up`).skill($skill`Become a Bat`).skill($skill`Throw Latte on Opponent`)
         ),
     },
     songTask($effect`Fat Leon's Phat Loot Lyric`, $effect`Ode to Booze`),
@@ -94,7 +95,6 @@ const ItemDrop: CSQuest = {
         return {
             modifier: MODIFIERS.join(','),
             familiar: $familiar`Trick-or-Treating Tot`,
-            modes: { umbrella: "bucket style" },
             avoid: $items`broken champagne bottle`
         };
     }
