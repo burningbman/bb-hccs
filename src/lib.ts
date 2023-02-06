@@ -8,6 +8,7 @@ import {
   cliExecute,
   cliExecuteOutput,
   create,
+  eat,
   Effect,
   equip,
   equippedAmount,
@@ -20,8 +21,11 @@ import {
   Location,
   Monster,
   myFamiliar,
+  myMaxmp,
+  myMp,
   print,
   pullsRemaining,
+  restoreMp,
   retrieveItem,
   runChoice,
   runCombat,
@@ -573,4 +577,28 @@ export function unequip(item: Item): void {
     if (!slot) return;
     equip(slot, $item`none`);
   }
+}
+
+type Horse = "dark" | "normal" | "crazy" | "pale" | null;
+
+export function horsery(): Horse {
+  return (get("_horsery").split(" ")[0] as Horse) ?? null;
+}
+
+export function horse(horse: Horse): void {
+  if (horsery() !== horse) cliExecute(`horsery ${horse} horse`);
+}
+
+export function ensureMp(mp: number): void {
+  if (myMp() > mp) return;
+  if (mp > myMaxmp()) throw `Insufficient maximum mp!`;
+  while (
+    have($item`magical sausage`) ||
+    (have($item`magical sausage casing`) && myMp() < mp && get("_sausagesEaten") < 23)
+  ) {
+    retrieveItem($item`magical sausage`);
+    eat($item`magical sausage`);
+  }
+
+  if (myMp() < mp) restoreMp(mp);
 }

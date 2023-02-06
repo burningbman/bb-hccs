@@ -3,7 +3,6 @@ import {
   autosell,
   availableAmount,
   cliExecute,
-  create,
   drink,
   eat,
   equip,
@@ -49,7 +48,6 @@ import {
   AutumnAton,
   BeachComb,
   Clan,
-  CombatLoversLocket,
   CommunityService,
   ensureEffect,
   get,
@@ -66,8 +64,6 @@ import ItemDrop from "./item";
 import {
   adventureWithCarolGhost,
   ensureItem,
-  ensurePotionEffect,
-  ensurePullEffect,
   ensureSewerItem,
   ensureSong,
   mapMacro,
@@ -83,6 +79,8 @@ import {
   useBestFamiliar,
   voterMonsterNow,
 } from "./lib";
+import Spell from "./spell";
+import Weapon from "./weapon";
 
 enum TestEnum {
   HitPoints = CommunityService.HP.id,
@@ -116,27 +114,6 @@ function handleOutfit(test: TestObject | undefined) {
 function ensureSaucestormMana() {
   if (myMp() < 12) {
     restoreMp(20);
-  }
-}
-
-function ensureMeteorShowerAndCarolGhostEffect() {
-  equip($item`Fourth of May Cosplay Saber`);
-  if (!haveEffect($effect`Meteor Showered`)) {
-    if (!haveEffect($effect`Do You Crush What I Crush?`)) {
-      adventureWithCarolGhost(
-        $effect`Do You Crush What I Crush?`,
-        Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
-      );
-    } else {
-      adventureMacro(
-        $location`The Dire Warren`,
-        Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
-      );
-    }
-    if (handlingChoice()) runChoice(3);
-    if (!have($effect`Meteor Showered`)) {
-      throw "Did not get Meteor Showered";
-    }
   }
 }
 
@@ -213,24 +190,6 @@ const getBatteries = () => {
   for (let i = 1; i < 8; i++) {
     cliExecute(`choice.php?pwd&whichchoice=1448&option=1&pp=${i}`);
   }
-};
-
-const ensureDeepDarkVisions = () => {
-  if (have($effect`Visions of the Deep Dark Deeps`)) return;
-
-  BeachComb.tryHead($effect`Does It Have a Skull In There??`);
-  useFamiliar($familiar`Exotic Parrot`);
-  ensureEffect($effect`Feeling Peaceful`);
-  cliExecute("retrocape vampire hold");
-
-  upkeepHpAndMp();
-  if (Math.round(numericModifier("spooky resistance")) < 10) {
-    if (Math.round(numericModifier("spooky resistance")) < 10) {
-      throw "Not enough spooky res for Deep Dark Visions.";
-    }
-  }
-
-  useSkill(1, $skill`Deep Dark Visions`);
 };
 
 function vote() {
@@ -316,6 +275,7 @@ function setup() {
   pullIfPossible(1, $item`cracker`, 2000);
   pullIfPossible(1, $item`dromedary drinking helmet`, 2000);
   pullIfPossible(1, $item`green mana`, 10000);
+  pullIfPossible(1, $item`pixel star`, 35000);
 }
 
 function preCoilWireFights() {
@@ -640,110 +600,6 @@ function doFamiliarTest() {
   printModtrace("Familiar Weight");
 }
 
-function doWeaponTest() {
-  cliExecute('umbrella weapon');
-  ensureDeepDarkVisions(); // do this for spell test before getting cowrrupted
-
-  if (!haveEffect($effect`Cowrruption`)) {
-    equip($item`Fourth of May Cosplay Saber`);
-    if (get("camelSpit") >= 100) useFamiliar($familiar`Melodramedary`);
-    Macro.trySkill($skill`%fn, spit on me!`)
-      .skill($skill`Use the Force`).setAutoAttack();
-    cliExecute("reminisce ungulith");
-    setAutoAttack(0);
-    // account for saber not updating locket info
-    set('_locketMonstersFought', `${get('_locketMonstersFought')},${$monster`ungulith`.id}`);
-
-    if (handlingChoice()) runChoice(-1);
-    use($item`corrupted marrow`);
-  }
-
-  if (!CombatLoversLocket.monstersReminisced().includes($monster`Black Crayon Pirate`)) {
-    //TODO Change familiar
-    Macro.skill($skill`Saucegeyser`)
-      .repeat().setAutoAttack();
-    cliExecute("reminisce black crayon pirate");
-    setAutoAttack(0);
-  }
-
-  ensureMeteorShowerAndCarolGhostEffect();
-
-  if (availableAmount($item`twinkly nuggets`) > 0) {
-    ensureEffect($effect`Twinkly Weapon`);
-  }
-
-  ensureEffect($effect`Carol of the Bulls`);
-  ensureEffect($effect`Song of the North`);
-  ensureEffect($effect`Rage of the Reindeer`);
-  ensureEffect($effect`Frenzied, Bloody`);
-  ensureEffect($effect`Scowl of the Auk`);
-  ensureEffect($effect`Disdain of the War Snapper`);
-  ensureEffect($effect`Tenacity of the Snapper`);
-  ensureSong($effect`Jackasses' Symphony of Destruction`);
-  ensureEffect($effect`Billiards Belligerence`);
-  ensureEffect($effect`Lack of Body-Building`);
-  ensureEffect($effect`Bow-Legged Swagger`);
-  ensureEffect($effect`Blessing of the Bird`); // PM has 100% weapon damage
-  ensurePullEffect($effect`Nigh-Invincible`, $item`pixel star`);
-  have($item`true grit`) && use($item`true grit`);
-
-  SongBoom.setSong("These Fists Were Made for Punchin'");
-  cliExecute("fold broken champagne bottle");
-  handleOutfit(tests.find((test) => test.id === TestEnum.WEAPON));
-  printModtrace(["Weapon Damage", "Weapon Damage Percent"]);
-}
-
-function doSpellTest() {
-  cliExecute('umbrella spell');
-  ensureDeepDarkVisions(); // should already have this from weapon test
-
-  if (!have($effect`Saucefingers`)) {
-    useFamiliar($familiar`Mini-Adventurer`);
-    setChoice(768, 4);
-    adventureMacro(
-      $location`The Dire Warren`,
-      Macro.skill($skill`Feel Hatred`)
-    );
-    useFamiliar($familiar`none`);
-  }
-
-  if (get("_poolGames") < 3) {
-    ensureEffect($effect`Mental A-cue-ity`);
-  }
-
-  // Tea party
-  if (!get("_madTeaParty")) {
-    ensureSewerItem(1, $item`mariachi hat`);
-    ensureEffect($effect`Full Bottle in front of Me`);
-  }
-
-  if (have($item`sugar sheet`) && !have($item`sugar chapeau`)) {
-    create($item`sugar chapeau`);
-  }
-
-  useSkill(1, $skill`Spirit of Cayenne`);
-  ensureEffect($effect`Elemental Saucesphere`);
-  ensureEffect($effect`Astral Shell`);
-  BeachComb.tryHead($effect`We're All Made of Starfish`);
-  ensureEffect($effect`Simmering`);
-  ensureEffect($effect`Song of Sauce`);
-  ensureEffect($effect`Carol of the Hells`);
-  ensureEffect($effect`Arched Eyebrow of the Archmage`);
-  ensurePullEffect($effect`Nigh-Invincible`, $item`pixel star`);
-  ensureSong($effect`Jackasses' Symphony of Destruction`);
-
-  ensureMeteorShowerAndCarolGhostEffect();
-
-  if (Math.round(numericModifier("spell damage percent")) % 50 >= 40) {
-    ensureItem(1, $item`soda water`);
-    ensurePotionEffect($effect`Concentration`, $item`cordial of concentration`);
-  }
-  handleOutfit(tests.find((test) => test.id === TestEnum.SPELL));
-  printModtrace(["Spell Damage", "Spell Damage Percent"]);
-
-  return 1; // 1 adventure spent using simmer
-}
-
 function doHotResTest() {
   if (!have($effect`Fireproof Foam Suit`)) {
     equip($slot`weapon`, $item`industrial fire extinguisher`);
@@ -837,18 +693,6 @@ const tests: TestObject[] = [{
   spreadsheetTurns: 36,
   test: CommunityService.FamiliarWeight,
   doTestPrep: doFamiliarTest,
-},
-{
-  id: TestEnum.WEAPON,
-  spreadsheetTurns: 1,
-  test: CommunityService.WeaponDamage,
-  doTestPrep: doWeaponTest,
-},
-{
-  id: TestEnum.SPELL,
-  spreadsheetTurns: 29,
-  test: CommunityService.SpellDamage,
-  doTestPrep: doSpellTest,
 },
 {
   id: TestEnum.NONCOMBAT,
@@ -952,10 +796,5 @@ export function main(input: string): void {
   equip($slot`familiar`, $item`cracker`);
   runTest(TestEnum.HOT_RES);
   runTest(TestEnum.FAMILIAR);
-  runTest(TestEnum.WEAPON);
-  runTest(TestEnum.SPELL);
-  CSEngine.runTests(ItemDrop);
-
-  CommunityService.printLog("green");
-  CommunityService.donate();
+  CSEngine.runTests(...[Weapon, Spell, ItemDrop]);
 }

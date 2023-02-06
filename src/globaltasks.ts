@@ -18,7 +18,7 @@ const GLOBAL_TASKS: Task[] = [
     {
         name: "June Cleaver",
         completed: () => get("_juneCleaverFightsLeft") > 0,
-        ready: () => Counter.get("Portscan") === Infinity,
+        ready: () => !have($effect`Meteor Showered`) && Counter.get("Portscan") === Infinity,
         do: () =>
             withProperty("recoveryScript", "", () => {
                 adv1($location`Noob Cave`, -1, "");

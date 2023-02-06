@@ -1,6 +1,9 @@
 import { Task } from "grimoire-kolmafia";
-import { Skill, Effect, toSkill, toEffect, myMp, mpCost, useSkill, getProperty, effectModifier, Item, use, cliExecute } from "kolmafia";
-import { BeachComb, get, have } from "libram";
+import { Skill, Effect, toSkill, toEffect, myMp, mpCost, useSkill, getProperty, effectModifier, Item, use, cliExecute, adv1, create, eat, handlingChoice, runChoice } from "kolmafia";
+import { $effect, $familiar, $item, $location, $skill, BeachComb, get, have, set } from "libram";
+import { CSStrategy, Macro } from "./combatMacros";
+import { horsery, horse } from "./lib";
+import uniform from "./outfit";
 
 export function skillTask(x: Skill | Effect): Task {
     {
@@ -51,5 +54,69 @@ export function songTask(song: Effect | Skill, shrugSong: Effect | Skill): Task 
             if (have(shrugSongEffect)) cliExecute(`shrug ${shrugSongEffect}`);
             useSkill(wantedSongSkill);
         },
+    };
+}
+
+export function restore(effects: Effect[]): Task {
+    return {
+        name: "Restore",
+        completed: () => effects.every((e) => have(e)),
+        do: () => {
+            if (!have($item`magical sausage`) && have($item`magical sausage casing`)) {
+                create(1, $item`magical sausage`);
+            }
+            if (have($item`magical sausage`)) {
+                eat(1, $item`magical sausage`);
+            }
+        },
+    };
+}
+
+let showers = get("_meteorShowerUses");
+export function meteorShower(): Task {
+    return {
+        name: "Meteor Showered",
+        ready: () => get("_meteorShowerUses") < 5 && get("_saberForceUses") < 5,
+        completed: () => have($effect`Meteor Showered`),
+        prepare: () => horsery() === "pale" && horse("dark"),
+        do: () => {
+            adv1($location`The Dire Warren`, -1, "");
+            if (handlingChoice()) runChoice(-1);
+        },
+        outfit: () =>
+            uniform({
+                changes: {
+                    familiar: $familiar.none,
+                    famequip: $item.none,
+                    weapon: $item`Fourth of May Cosplay Saber`,
+                },
+            }),
+        choices: { [1387]: 3 },
+        combat: new CSStrategy(() =>
+            Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
+        ),
+        post: () => {
+            if (have($effect`Meteor Showered`)) showers++;
+            set("_meteorShowerUses", showers);
+        },
+    };
+}
+
+export function doYouCrush(): Task {
+    return {
+        name: "Do You Crush What I Crush?",
+        completed: () => have($effect`Do You Crush What I Crush?`),
+        ready: () => !have($effect`Holiday Yoked`),
+        do: $location`The Dire Warren`,
+        outfit: () =>
+            uniform({
+                changes: { familiar: $familiar`Ghost of Crimbo Carols`, famequip: $item.none },
+            }),
+        prepare: () => horsery() === "pale" && horse("dark"),
+        combat: new CSStrategy(() =>
+            Macro.trySkill($skill`Feel Hatred`)
+                .trySkill($skill`Snokebomb`)
+                .abort()
+        ),
     };
 }
