@@ -602,3 +602,9 @@ export function ensureMp(mp: number): void {
 
   if (myMp() < mp) restoreMp(mp);
 }
+
+export function hasNcBird(): boolean {
+  return get("yourFavoriteBirdMods")
+    .split(",")
+    .some((mod) => mod.includes("Combat Rate: -"));
+}

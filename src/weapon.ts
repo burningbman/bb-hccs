@@ -1,10 +1,9 @@
 import { CSStrategy, Macro } from "./combatMacros";
-import { beachTask, doYouCrush, potionTask, restore, skillTask, songTask } from "./commons";
+import { beachTask, doYouCrush, famPool, potionTask, restore, skillTask, songTask } from "./commons";
 import { CSQuest } from "./engine";
 import uniform from "./outfit";
 import {
     availableAmount,
-    cliExecute,
     handlingChoice,
     myHp,
     myMaxhp,
@@ -58,8 +57,6 @@ const Weapon: CSQuest = {
             outfit: {
                 modifier: "10 spooky res, 10 cold res, HP",
                 familiar: $familiar`Exotic Parrot`,
-                famequip: $item`cracker`,
-                modes: { parka: "ghostasaurus" },
             },
         },
         ...buffs.map(skillTask),
@@ -68,11 +65,7 @@ const Weapon: CSQuest = {
         potionTask($item`vial of hamethyst juice`),
         beachTask($effect`Lack of Body-Building`),
         songTask($effect`Jackasses' Symphony of Destruction`, $effect`The Sonata of Sneakiness`),
-        {
-            name: "Play Pool",
-            completed: () => have($effect`Billiards Belligerence`),
-            do: () => cliExecute("pool 1"),
-        },
+        famPool(),
         doYouCrush(),
         {
             name: "Spit Ungulith",

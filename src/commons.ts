@@ -1,6 +1,6 @@
 import { Task } from "grimoire-kolmafia";
 import { Skill, Effect, toSkill, toEffect, myMp, mpCost, useSkill, getProperty, effectModifier, Item, use, cliExecute, adv1, create, eat, handlingChoice, runChoice } from "kolmafia";
-import { $effect, $familiar, $item, $location, $skill, BeachComb, get, have, set } from "libram";
+import { $effect, $effects, $familiar, $item, $location, $skill, BeachComb, get, have, set } from "libram";
 import { CSStrategy, Macro } from "./combatMacros";
 import { horsery, horse } from "./lib";
 import uniform from "./outfit";
@@ -69,6 +69,9 @@ export function restore(effects: Effect[]): Task {
                 eat(1, $item`magical sausage`);
             }
         },
+        limit: {
+            tries: 1
+        }
     };
 }
 
@@ -118,5 +121,33 @@ export function doYouCrush(): Task {
                 .trySkill($skill`Snokebomb`)
                 .abort()
         ),
+    };
+}
+
+export function commonFamiliarWeightBuffs(): Task[] {
+    const buffs = $effects`Empathy, Leash of Linguini, Blood Bond`;
+    return [
+        ...buffs.map(skillTask),
+        restore(buffs),
+        {
+            name: "Fixodene",
+            completed: () => get("_freePillKeeperUsed"),
+            do: () => cliExecute("pillkeeper familiar"),
+        },
+        // {
+        //     name: "Suzie's Blessing",
+        //     completed: () => get("_clanFortuneBuffUsed"),
+        //     do: () => cliExecute("fortune buff familiar"),
+        // },
+        beachTask($effect`Do I Know You From Somewhere?`),
+    ];
+}
+
+export function famPool(): Task {
+    return {
+        name: "Play Pool",
+        ready: () => get('_poolGames') < 3,
+        completed: () => have($effect`Billiards Belligerence`),
+        do: () => cliExecute("pool 1"),
     };
 }

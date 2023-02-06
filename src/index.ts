@@ -8,7 +8,6 @@ import {
   equip,
   equippedItem,
   getCampground,
-  handlingChoice,
   haveEffect,
   haveEquipped,
   myBasestat,
@@ -18,11 +17,9 @@ import {
   myMaxhp,
   myMeat,
   myMp,
-  mySign,
   myThrall,
   numericModifier,
   restoreMp,
-  retrieveItem,
   runChoice,
   runCombat,
   setAutoAttack,
@@ -60,6 +57,8 @@ import {
 } from "libram";
 import { Macro } from "./combatMacros";
 import { CSEngine } from "./engine";
+import FamiliarWeight from "./familiar";
+import HotRes from "./hotres";
 import ItemDrop from "./item";
 import {
   adventureWithCarolGhost,
@@ -72,13 +71,12 @@ import {
   pullIfPossible,
   sausageFightGuaranteed,
   setChoice,
-  shrug,
   synthExp,
   tryUse,
-  unequip,
   useBestFamiliar,
   voterMonsterNow,
 } from "./lib";
+import Noncombat from "./noncombat";
 import Spell from "./spell";
 import Weapon from "./weapon";
 
@@ -87,12 +85,6 @@ enum TestEnum {
   MUS = CommunityService.Muscle.id,
   MYS = CommunityService.Mysticality.id,
   MOX = CommunityService.Moxie.id,
-  FAMILIAR = CommunityService.FamiliarWeight.id,
-  WEAPON = CommunityService.WeaponDamage.id,
-  SPELL = CommunityService.SpellDamage.id,
-  NONCOMBAT = CommunityService.Noncombat.id,
-  ITEM = CommunityService.BoozeDrop.id,
-  HOT_RES = CommunityService.HotRes.id,
   COIL_WIRE = CommunityService.CoilWire.id,
   DONATE = 30,
 }
@@ -272,7 +264,7 @@ function setup() {
 
   use(toItem('S.I.T. Course Completion Certificate'));
 
-  pullIfPossible(1, $item`cracker`, 2000);
+  pullIfPossible(1, $item`overloaded Yule battery`, 20000);
   pullIfPossible(1, $item`dromedary drinking helmet`, 2000);
   pullIfPossible(1, $item`green mana`, 10000);
   pullIfPossible(1, $item`pixel star`, 35000);
@@ -572,89 +564,6 @@ function doMusTest() {
   printModtrace(['Muscle', 'Muscle Percent']);
 }
 
-function doFamiliarTest() {
-  if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
-
-  // These should have fallen through all the way from leveling.
-  ensureEffect($effect`Fidoxene`);
-  ensureEffect($effect`Billiards Belligerence`);
-  ensureEffect($effect`Blood Bond`);
-  ensureEffect($effect`Leash of Linguini`);
-  ensureEffect($effect`Empathy`);
-
-  if (have($item`short stack of pancakes`)) use($item`short stack of pancakes`);
-  if (mySign() !== "Platypus") {
-    unequip($item`hewn moon-rune spoon`);
-    visitUrl("inv_use.php?whichitem=10254&pwd&doit=96&whichsign=4");
-  }
-
-  if (!have($effect`Meteor Showered`)) {
-    equip($item`Fourth of May Cosplay Saber`);
-    adventureMacro(
-      $location`The Dire Warren`,
-      Macro.skill($skill`Meteor Shower`).skill($skill`Use the Force`)
-    );
-    if (handlingChoice()) runChoice(3);
-  }
-  handleOutfit(tests.find((test) => test.id === TestEnum.FAMILIAR));
-  printModtrace("Familiar Weight");
-}
-
-function doHotResTest() {
-  if (!have($effect`Fireproof Foam Suit`)) {
-    equip($slot`weapon`, $item`industrial fire extinguisher`);
-    equip($slot`off-hand`, $item`Fourth of May Cosplay Saber`);
-    adventureMacro(
-      $location`Noob Cave`,
-      Macro.skill($skill`Fire Extinguisher: Foam Yourself`).skill(
-        $skill`Use the Force`
-      )
-    );
-    if (!have($effect`Fireproof Foam Suit`)) throw `Error, not foamy enough`;
-  }
-
-  ensureEffect($effect`Elemental Saucesphere`);
-  ensureEffect($effect`Astral Shell`);
-  ensureEffect($effect`Blood Bond`);
-  ensureEffect($effect`Leash of Linguini`);
-  ensureEffect($effect`Empathy`);
-  ensureEffect($effect`Feeling Peaceful`);
-  BeachComb.tryHead($effect`Hot-Headed`);
-
-  cliExecute("retrocape vampire hold");
-  handleOutfit(tests.find((test) => test.id === TestEnum.HOT_RES));
-  printModtrace("Hot Resistance");
-}
-
-function doNonCombatTest() {
-  cliExecute("horsery -combat");
-  cliExecute('umbrella nc');
-  if (myHp() < 30) useSkill(1, $skill`Cannelloni Cocoon`);
-  equip($slot`acc3`, $item`Powerful Glove`);
-
-  shrug($effect`The Moxious Madrigal`);
-  ensureEffect($effect`Blood Bond`);
-  ensureEffect($effect`Leash of Linguini`);
-  ensureEffect($effect`Empathy`);
-  ensureEffect($effect`The Sonata of Sneakiness`);
-  ensureEffect($effect`Smooth Movements`);
-  ensureEffect($effect`Invisible Avatar`);
-  ensureEffect($effect`Feeling Lonely`);
-  // ensureEffect($effect`A Rose by Any Other Material`);
-  ensureEffect($effect`Throwing Some Shade`);
-  // ensureEffect($effect`Silent Running`);
-  ensureEffect($effect`Blessing of the Bird`); // PM has 7% NC bird
-
-  useFamiliar($familiar`Disgeist`);
-
-  if (!retrieveItem(1, $item`porkpie-mounted popper`)) {
-    visitUrl("clan_viplounge.php?action=fwshop&whichfloor=2", false, true);
-    visitUrl("shop.php?whichshop=fwshop&action=buyitem&quantity=1&whichrow=1249&pwd", true, true);
-  }
-  handleOutfit(tests.find((test) => test.id === TestEnum.NONCOMBAT));
-  printModtrace("Combat Rate");
-}
-
 const tests: TestObject[] = [{
   id: TestEnum.HitPoints,
   spreadsheetTurns: 1,
@@ -681,24 +590,6 @@ const tests: TestObject[] = [{
   spreadsheetTurns: 1,
   test: CommunityService.Moxie,
   doTestPrep: doMoxTest,
-},
-{
-  id: TestEnum.HOT_RES,
-  spreadsheetTurns: 1,
-  test: CommunityService.HotRes,
-  doTestPrep: doHotResTest,
-},
-{
-  id: TestEnum.FAMILIAR,
-  spreadsheetTurns: 36,
-  test: CommunityService.FamiliarWeight,
-  doTestPrep: doFamiliarTest,
-},
-{
-  id: TestEnum.NONCOMBAT,
-  spreadsheetTurns: 1,
-  test: CommunityService.Noncombat,
-  doTestPrep: doNonCombatTest,
 },
 {
   id: TestEnum.COIL_WIRE,
@@ -761,7 +652,7 @@ function doDailies() {
   );
 }
 
-export function main(input: string): void {
+export function main(): void {
   setAutoAttack(0);
   doDailies();
 
@@ -784,17 +675,16 @@ export function main(input: string): void {
     useSkill(2, $skill`The Ode to Booze`);
     drink(6, $item`astral pilsner`);
   }
-
+  ensureSewerItem(1, $item`turtle totem`);
 
   runTest(TestEnum.MUS);
   runTest(TestEnum.HitPoints);
   runTest(TestEnum.MYS);
   runTest(TestEnum.MOX);
-  runTest(TestEnum.NONCOMBAT);
-
-  useFamiliar($familiar`Exotic Parrot`);
-  equip($slot`familiar`, $item`cracker`);
-  runTest(TestEnum.HOT_RES);
-  runTest(TestEnum.FAMILIAR);
-  CSEngine.runTests(...[Weapon, Spell, ItemDrop]);
+  CSEngine.runTests(Noncombat,
+    HotRes,
+    FamiliarWeight,
+    Weapon,
+    Spell,
+    ItemDrop);
 }
