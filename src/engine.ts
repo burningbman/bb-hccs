@@ -1,4 +1,4 @@
-import GLOBAL_QUEST from "./globaltasks";
+import { PRE_QUEST, POST_QUEST } from "./globaltasks";
 import { Engine, getTasks, Outfit, OutfitSpec, Quest, Task } from "grimoire-kolmafia";
 import {
     cliExecute,
@@ -33,7 +33,7 @@ export class CSEngine extends Engine<never, Task> {
     turnsSpent?: number | (() => number);
 
     constructor(quest: CSQuest) {
-        super(getTasks([GLOBAL_QUEST, quest]));
+        super(getTasks([PRE_QUEST, quest, POST_QUEST]));
         this.csOptions = quest;
         this.turnsSpent = quest.turnsSpent;
         this.name =

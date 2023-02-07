@@ -10,8 +10,6 @@ import {
   getCampground,
   haveEffect,
   haveEquipped,
-  myBasestat,
-  myBuffedstat,
   myHp,
   myLevel,
   myMaxhp,
@@ -33,16 +31,13 @@ import {
   $effect,
   $familiar,
   $item,
-  $items,
   $location,
   $monster,
   $skill,
   $slot,
-  $stat,
   $thrall,
   adventureMacro,
   adventureMacroAuto,
-  AutumnAton,
   BeachComb,
   Clan,
   CommunityService,
@@ -67,41 +62,17 @@ import {
   ensureSong,
   mapMacro,
   multiFightAutoAttack,
-  printModtrace,
   pullIfPossible,
   sausageFightGuaranteed,
   setChoice,
   synthExp,
   tryUse,
   useBestFamiliar,
-  voterMonsterNow,
 } from "./lib";
 import Noncombat from "./noncombat";
 import Spell from "./spell";
+import { Hitpoints, Moxie, Muscle, Mysticality } from "./stattest";
 import Weapon from "./weapon";
-
-enum TestEnum {
-  HitPoints = CommunityService.HP.id,
-  MUS = CommunityService.Muscle.id,
-  MYS = CommunityService.Mysticality.id,
-  MOX = CommunityService.Moxie.id,
-  COIL_WIRE = CommunityService.CoilWire.id,
-  DONATE = 30,
-}
-
-interface TestObject {
-  id: TestEnum;
-  spreadsheetTurns: number;
-  test: CommunityService;
-  doTestPrep: {
-    (): void
-  };
-}
-
-function handleOutfit(test: TestObject | undefined) {
-  if (!test) return;
-  test.test.maximize();
-}
 
 function ensureSaucestormMana() {
   if (myMp() < 12) {
@@ -130,6 +101,7 @@ function doGuaranteedGoblin() {
   if (!haveEffect($effect`Feeling Lost`) && sausageFightGuaranteed()) {
     useBestFamiliar();
     ensureSaucestormMana();
+    equipStatOutfit();
     const offHand = equippedItem($slot`off-hand`);
     equip($item`Kramco Sausage-o-Matic™`);
     adventureMacro(
@@ -142,36 +114,6 @@ function doGuaranteedGoblin() {
       )
     );
     equip(offHand);
-  }
-}
-
-function doVotingMonster() {
-  if (voterMonsterNow()) {
-    const acc3 = equippedItem($slot`acc3`);
-    equip($item`"I Voted!" sticker`, $slot`acc3`);
-    adventureMacro($location`Noob Cave`, Macro.default());
-    equip(acc3, $slot`acc3`);
-  }
-}
-
-function doAutumnaton() {
-  if (AutumnAton.available()) {
-    AutumnAton.sendTo($location`The Sleazy Back Alley`);
-  }
-}
-
-function runTest(testId: TestEnum) {
-  const test = tests.find((test) => test.id === testId);
-  if (test && !test.test.isDone()) {
-    doGuaranteedGoblin();
-    doVotingMonster();
-    doAutumnaton();
-
-    if (test.test.run(test.doTestPrep, test.spreadsheetTurns) === "failed") {
-      abort(
-        `Didn't complete ${TestEnum[testId]} test. Expected ${test.spreadsheetTurns} turns, predicted ${test.test.prediction} turns`
-      );
-    }
   }
 }
 
@@ -268,22 +210,6 @@ function setup() {
   pullIfPossible(1, $item`dromedary drinking helmet`, 2000);
   pullIfPossible(1, $item`green mana`, 10000);
   pullIfPossible(1, $item`pixel star`, 35000);
-}
-
-function preCoilWireFights() {
-  if (have($item`cherry`) || CommunityService.CoilWire.isDone()) return;
-
-  new Requirement(
-    ["100 mysticality experience percent, mysticality experience, ML"], {
-    forceEquip: [...$items`Daylight Shavings Helmet`, $item`unbreakable umbrella`], // Setup PM to get 2nd buff after coiling wire
-    preventEquip: $items`makeshift garbage shirt`, // Save exp boosts for scalers
-  }
-  ).maximize();
-  useBestFamiliar();
-
-  if (myHp() < myMaxhp()) {
-    useSkill($skill`Cannelloni Cocoon`);
-  }
 }
 
 function useStatGains() {
@@ -507,101 +433,6 @@ function doFreeFights() {
   }
 }
 
-function doHpTest() {
-  useSkill($skill`Bind Undead Elbow Macaroni`);
-  cliExecute("retrocape muscle");
-  handleOutfit(tests.find((test) => test.id === TestEnum.HitPoints));
-  printModtrace(["Maximum HP", "Maximum HP Percent"]);
-}
-
-function doMoxTest() {
-  if (get("_horseryCrazyMox").indexOf("+") === 0) {
-    cliExecute("horsery stat");
-  }
-
-  useSkill($skill`Bind Penne Dreadful`);
-  ensureEffect($effect`Blessing of the Bird`); // SA/PM have moxie bird
-  ensureEffect($effect`Big`);
-  ensureEffect($effect`Song of Bravado`);
-  ensureSong($effect`Stevedave's Shanty of Superiority`);
-  ensureSong($effect`The Moxious Madrigal`);
-  BeachComb.tryHead($effect`Pomp & Circumsands`);
-  if (have($item`runproof mascara`)) use($item`runproof mascara`);
-  ensureEffect($effect`Quiet Desperation`);
-  ensureEffect($effect`Disco Fever`);
-  ensureEffect($effect`Mariachi Mood`);
-  cliExecute("retrocape moxie");
-  // use($item `pocket maze`);
-
-  if (myBuffedstat($stat`moxie`) - myBasestat($stat`moxie`) < 1770) {
-    useSkill(1, $skill`Acquire Rhinestones`);
-    use(availableAmount($item`rhinestone`), $item`rhinestone`);
-  }
-  handleOutfit(tests.find((test) => test.id === TestEnum.MOX));
-
-
-  printModtrace(["Moxie", "Moxie Percent"]);
-}
-
-function doMusTest() {
-  if (get("_horseryCrazyMus").indexOf("+") === 0) {
-    cliExecute("horsery stat");
-  }
-
-  useSkill($skill`Bind Undead Elbow Macaroni`);
-
-  ensureEffect($effect`Big`);
-  ensureEffect($effect`Song of Bravado`);
-  ensureEffect($effect`Rage of the Reindeer`);
-  BeachComb.tryHead($effect`Lack of Body-Building`);
-  ensureSong($effect`Stevedave's Shanty of Superiority`);
-  ensureSong($effect`Power Ballad of the Arrowsmith`);
-  ensureEffect($effect`Quiet Determination`);
-  ensureEffect($effect`Disdain of the War Snapper`);
-  cliExecute("retrocape muscle");
-  handleOutfit(tests.find((test) => test.id === TestEnum.MUS));
-
-  printModtrace(['Muscle', 'Muscle Percent']);
-}
-
-const tests: TestObject[] = [{
-  id: TestEnum.HitPoints,
-  spreadsheetTurns: 1,
-  test: CommunityService.HP,
-  doTestPrep: doHpTest,
-},
-{
-  id: TestEnum.MYS,
-  spreadsheetTurns: 1,
-  test: CommunityService.Mysticality,
-  doTestPrep: () => {
-    printModtrace(["Mysticality", "Mysticality Percent"]);
-    return;
-  },
-},
-{
-  id: TestEnum.MUS,
-  spreadsheetTurns: 4,
-  test: CommunityService.Muscle,
-  doTestPrep: doMusTest,
-},
-{
-  id: TestEnum.MOX,
-  spreadsheetTurns: 1,
-  test: CommunityService.Moxie,
-  doTestPrep: doMoxTest,
-},
-{
-  id: TestEnum.COIL_WIRE,
-  spreadsheetTurns: 60,
-  test: CommunityService.CoilWire,
-  doTestPrep: () => {
-    setup();
-    preCoilWireFights();
-  },
-},
-];
-
 function doDailies() {
   if (have($item`pantogram pants`)) return;
 
@@ -658,9 +489,7 @@ export function main(): void {
 
   const coilWireStatus = CommunityService.CoilWire.run(() => {
     setup();
-    preCoilWireFights();
     doGuaranteedGoblin();
-    doVotingMonster();
   }, 60);
   if (coilWireStatus === "failed") {
     abort(`Didn't coil wire.`);
@@ -677,11 +506,11 @@ export function main(): void {
   }
   ensureSewerItem(1, $item`turtle totem`);
 
-  runTest(TestEnum.MUS);
-  runTest(TestEnum.HitPoints);
-  runTest(TestEnum.MYS);
-  runTest(TestEnum.MOX);
-  CSEngine.runTests(Noncombat,
+  CSEngine.runTests(Muscle,
+    Hitpoints,
+    Mysticality,
+    Moxie,
+    Noncombat,
     HotRes,
     FamiliarWeight,
     Weapon,

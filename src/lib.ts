@@ -13,6 +13,7 @@ import {
   equip,
   equippedAmount,
   equippedItem,
+  Familiar,
   familiarWeight,
   getProperty,
   haveEffect,
@@ -391,17 +392,22 @@ export function multiFightAutoAttack(): void {
   }
 }
 
-export function useBestFamiliar(): void {
+export function getBestFamiliar(): Familiar {
   if (get("camelSpit") !== 100) {
-    useFamiliar($familiar`Melodramedary`);
-    equip($slot`familiar`, $item`dromedary drinking helmet`);
+    return $familiar`Melodramedary`;
   } else if (get("_hipsterAdv") < 7) {
-    useFamiliar($familiar`Artistic Goth Kid`);
+    return $familiar`Artistic Goth Kid`;
   } else if (!have($item`short stack of pancakes`)) {
-    useFamiliar($familiar`Shorter-Order Cook`);
+    return $familiar`Shorter-Order Cook`;
   } else {
-    useFamiliar($familiar`Shorter-Order Cook`);
+    return $familiar`Shorter-Order Cook`;
   }
+}
+
+export function useBestFamiliar(): void {
+  const fam = getBestFamiliar();
+  fam === $familiar`Melodramedary` && equip($item`dromedary drinking helmet`, $slot`familiar`);
+  useFamiliar(getBestFamiliar());
 }
 
 export function mapMacro(

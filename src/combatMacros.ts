@@ -55,7 +55,8 @@ export class Macro extends LibramMacro {
 
     toString(): string {
         return `${LibramMacro.ifHolidayWanderer(
-            LibramMacro.skill($skill`Feel Hatred`)
+            LibramMacro.trySkill($skill`Feel Hatred`)
+                .trySkill($skill`Snokebomb`)
         ).toString()};${super.toString()}`;
     }
 }
