@@ -21,8 +21,8 @@ type Misc = {
     name: string;
 };
 export type CSQuest = Quest<Task> & { turnsSpent?: number | (() => number) } & (Service | Misc) & {
-    modifiers: string[] | undefined,
-    outfit(): OutfitSpec
+    modifiers?: string[],
+    outfit?(): OutfitSpec
 };
 
 export class CSEngine extends Engine<never, Task> {

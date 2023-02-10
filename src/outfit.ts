@@ -1,5 +1,5 @@
 import { OutfitSpec } from "grimoire-kolmafia";
-import { Familiar, Item } from "kolmafia";
+import { cliExecute, Familiar, Item } from "kolmafia";
 import {
     $effect,
     $familiar,
@@ -44,7 +44,7 @@ const FAMILIAR_PICKS = [
     },
 ];
 
-function chooseFamiliar(canAttack: boolean): { familiar: Familiar; famequip: Item } {
+export function chooseFamiliar(canAttack?: boolean): { familiar: Familiar; famequip: Item } {
     const pick = FAMILIAR_PICKS.find(
         ({ condition, familiar }) =>
             condition() &&
@@ -59,8 +59,18 @@ function chooseFamiliar(canAttack: boolean): { familiar: Familiar; famequip: Ite
 
 type UniformOptions = { changes: OutfitSpec; canAttack: boolean };
 const DEFAULT_OPTIONS = { changes: {} as OutfitSpec, canAttack: true };
-export default function uniform(options: Partial<UniformOptions> = {}): OutfitSpec {
+export function uniform(options: Partial<UniformOptions> = {}): OutfitSpec {
     const { changes, canAttack } = { ...DEFAULT_OPTIONS, ...options };
     if ("familiar" in changes && !("famequip" in changes)) changes.famequip = $item`tiny stillsuit`;
     return { ...DEFAULT_UNIFORM(), ...chooseFamiliar(canAttack), ...changes };
+}
+
+export function levelUniform(options: Partial<{ changes: OutfitSpec }> = {}): OutfitSpec {
+    cliExecute('fold garbage shirt');
+    return {
+        ...chooseFamiliar(), ...{
+            modifier: '100 mysticality experience percent, mysticality experience',
+            shirt: $item`makeshift garbage shirt`
+        }, ...options.changes
+    };
 }

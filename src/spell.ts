@@ -10,7 +10,7 @@ import {
 } from "./commons";
 import { CSQuest } from "./engine";
 import { horse, horsery } from "./lib";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 import {
     cliExecute,
     create,

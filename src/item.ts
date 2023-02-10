@@ -5,7 +5,7 @@ import { CSStrategy, Macro } from "./combatMacros";
 import { songTask, skillTask, potionTask } from "./commons";
 import { CSQuest } from "./engine";
 import { ensureItem, synthItem } from "./lib";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 
 const MODIFIERS = ['item drop', 'booze drop'];
 
@@ -82,7 +82,8 @@ const ItemDrop: CSQuest = {
         name: 'Fortune Buff',
         completed: () => get("_clanFortuneBuffUsed"),
         do: () => cliExecute("fortune buff item")
-    }, {
+    },
+    {
         name: 'Synth Item',
         completed: () => have($effect`Synthesis: Collection`),
         do: () => synthItem()

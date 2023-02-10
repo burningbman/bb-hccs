@@ -1,9 +1,9 @@
 import { Task } from "grimoire-kolmafia";
-import { Skill, Effect, toSkill, toEffect, myMp, mpCost, useSkill, getProperty, effectModifier, Item, use, cliExecute, adv1, create, eat, handlingChoice, runChoice } from "kolmafia";
+import { Skill, Effect, toSkill, toEffect, myMp, mpCost, useSkill, getProperty, effectModifier, Item, use, cliExecute, adv1, create, eat, handlingChoice, runChoice, Thrall, myThrall } from "kolmafia";
 import { $effect, $effects, $familiar, $item, $location, $skill, BeachComb, get, have, set } from "libram";
 import { CSStrategy, Macro } from "./combatMacros";
 import { horsery, horse } from "./lib";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 
 export function skillTask(x: Skill | Effect): Task {
     {
@@ -27,6 +27,7 @@ export function beachTask(effect: Effect): Task {
             get("_freeBeachWalksUsed") < 11 &&
             get("beachHeadsUnlocked").split(",").includes(num.toFixed(0)),
         do: () => BeachComb.tryHead(effect),
+        limit: { tries: 1 }
     };
 }
 
@@ -54,6 +55,15 @@ export function songTask(song: Effect | Skill, shrugSong: Effect | Skill): Task 
             if (have(shrugSongEffect)) cliExecute(`shrug ${shrugSongEffect}`);
             useSkill(wantedSongSkill);
         },
+        limit: { tries: 1 }
+    };
+}
+
+export function thrallTask(thrall: Thrall): Task {
+    return {
+        name: thrall.toString(),
+        completed: () => myThrall() === thrall,
+        do: () => useSkill(thrall.skill),
     };
 }
 
@@ -130,7 +140,7 @@ export function commonFamiliarWeightBuffs(): Task[] {
         ...buffs.map(skillTask),
         restore(buffs),
         {
-            name: "Fixodene",
+            name: "Fidoxene",
             completed: () => get("_freePillKeeperUsed"),
             do: () => cliExecute("pillkeeper familiar"),
         },

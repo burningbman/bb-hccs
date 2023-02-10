@@ -2,7 +2,7 @@ import { CSStrategy } from "./combatMacros";
 import { commonFamiliarWeightBuffs, potionTask, restore, skillTask, songTask } from "./commons";
 import { CSQuest } from "./engine";
 import { hasNcBird, horse, horsery } from "./lib";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 import { runChoice, runCombat, useSkill, visitUrl } from "kolmafia";
 import { $effect, $effects, $familiar, $item, $skill, CommunityService, get, have } from "libram";
 

@@ -2,7 +2,7 @@ import { CSStrategy, Macro } from "./combatMacros";
 import { beachTask, commonFamiliarWeightBuffs, skillTask } from "./commons";
 import { CSQuest } from "./engine";
 import { horse, horsery } from "./lib";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 import {
     adv1,
     handlingChoice,

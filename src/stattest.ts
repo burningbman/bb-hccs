@@ -1,4 +1,4 @@
-import { beachTask, potionTask, restore, skillTask } from "./commons";
+import { beachTask, potionTask, restore, skillTask, thrallTask } from "./commons";
 import { CSQuest } from "./engine";
 import { itemAmount, myThrall, Thrall, use, useSkill } from "kolmafia";
 import {
@@ -6,6 +6,7 @@ import {
     $effects,
     $item,
     $items,
+    $skill,
     $thrall,
     CommunityService,
     have,
@@ -21,14 +22,6 @@ const SKILL_BUFFS = {
 
 function skillBuffTasks(key: keyof typeof SKILL_BUFFS): Task[] {
     return [...SKILL_BUFFS[key].map(skillTask), restore(SKILL_BUFFS[key])];
-}
-
-function thrallTask(thrall: Thrall): Task {
-    return {
-        name: thrall.toString(),
-        completed: () => myThrall() === thrall,
-        do: () => useSkill(thrall.skill),
-    };
 }
 
 const Muscle: CSQuest = {
@@ -80,10 +73,14 @@ const Moxie: CSQuest = {
         {
             name: "Rhinestones",
             completed: () => !have($item`rhinestone`),
-            do: () => use(itemAmount($item`rhinestone`), $item`rhinestone`),
+            do: (): void => {
+                useSkill($skill`Acquire Rhinestones`);
+                use(itemAmount($item`rhinestone`), $item`rhinestone`);
+            }
         },
         thrallTask($thrall`Penne Dreadful`),
-        potionTask($item`pocket maze`)
+        potionTask($item`pocket maze`),
+        beachTask($effect`Pomp & Circumsands`)
     ],
 };
 
@@ -93,9 +90,9 @@ const Hitpoints: CSQuest = {
     test: CommunityService.HP,
     turnsSpent: 0,
     maxTurns: 1,
-    modifiers: ['Maximum HP, Maximum HP Percent'],
+    modifiers: ['Maximum HP', 'Maximum HP Percent'],
     outfit: () => ({
-        modifier: ['Maximum HP, Maximum HP Percent'].join(',')
+        modifier: ['Maximum HP', 'Maximum HP Percent'].join(',')
     }),
     tasks: [
         ...skillBuffTasks("HP"),

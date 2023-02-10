@@ -1,8 +1,9 @@
 import { OutfitSpec, Quest, Task } from "grimoire-kolmafia";
-import { abort, adv1, cliExecute, haveEffect, reverseNumberology, totalTurnsPlayed, useSkill } from "kolmafia";
+import { abort, adv1, cliExecute, haveEffect, myAdventures, reverseNumberology, totalTurnsPlayed, useSkill } from "kolmafia";
 import { $effect, $item, $location, $skill, AutumnAton, Counter, get, have, withProperty } from "libram";
 import { CSStrategy, Macro } from "./combatMacros";
 import { getBestFamiliar, sausageFightGuaranteed, voterMonsterNow } from "./lib";
+import { levelUniform } from "./outfit";
 
 const PRE_QUEST: Quest<Task> = {
     name: "Pre-Quest Global", tasks: [
@@ -14,9 +15,10 @@ const PRE_QUEST: Quest<Task> = {
         },
         {
             name: "Numberology",
-            ready: () => Object.values(reverseNumberology()).includes(69) && get("skillLevel144") <= 3,
+            ready: () => Object.values(reverseNumberology()).includes(69) && get("skillLevel144") <= 3 && myAdventures() > 0,
             completed: () => get("_universeCalculated") >= get("skillLevel144"),
             do: () => cliExecute("numberology 69"),
+            limit: { tries: 1 }
         },
         {
             name: "June Cleaver",
@@ -45,12 +47,11 @@ const POST_QUEST: Quest<Task> = {
         completed: () => totalTurnsPlayed() === get('_lastSausageMonsterTurn'),
         ready: () => sausageFightGuaranteed() && !have($effect`Feeling Lost`) && !haveEffect($effect`Meteor Showered`),
         outfit: (): OutfitSpec => {
-            return {
-                modifier: '100 mysticality experience percent, mysticality experience',
-                offhand: $item`Kramco Sausage-o-Matic™`,
-                shirt: $item`makeshift garbage shirt`,
-                familiar: getBestFamiliar()
-            };
+            return levelUniform({
+                changes: {
+                    offhand: $item`Kramco Sausage-o-Matic™`,
+                }
+            });
         },
         do: $location`Noob Cave`,
         combat: new CSStrategy(() => Macro.if_(

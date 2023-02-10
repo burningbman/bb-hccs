@@ -1,7 +1,7 @@
 import { CSStrategy, Macro } from "./combatMacros";
 import { beachTask, doYouCrush, famPool, potionTask, restore, skillTask, songTask } from "./commons";
 import { CSQuest } from "./engine";
-import uniform from "./outfit";
+import { uniform } from "./outfit";
 import {
     availableAmount,
     handlingChoice,
