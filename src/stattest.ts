@@ -1,6 +1,6 @@
-import { beachTask, potionTask, restore, skillTask, thrallTask } from "./commons";
+import { beachTask, potionTask, restore, skillTask, songTask, thrallTask } from "./commons";
 import { CSQuest } from "./engine";
-import { itemAmount, myThrall, Thrall, use, useSkill } from "kolmafia";
+import { cliExecute, itemAmount, use, useSkill } from "kolmafia";
 import {
     $effect,
     $effects,
@@ -49,7 +49,15 @@ const Mysticality: CSQuest = {
     modifiers: ['Mysticality', 'Mysticality Percent'],
     turnsSpent: 0,
     maxTurns: 1,
-    tasks: [...skillBuffTasks("MYSTICALITY")],
+    tasks: [
+        {
+            name: 'acquire rocket boots',
+            do: () => cliExecute(`acquire rocket boots`),
+            completed: () => have($item`rocket boots`)
+        },
+        songTask($effect`The Magical Mojomuscular Melody`, $effect`Ur-Kel's Aria of Annoyance`),
+        ...skillBuffTasks("MYSTICALITY")
+    ],
     outfit: () => ({
         modifier: ['Mysticality', 'Mysticality Percent'].join(',')
     }),

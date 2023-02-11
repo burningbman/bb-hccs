@@ -76,6 +76,7 @@ const ItemDrop: CSQuest = {
     },
     {
         name: 'Get Sparkler',
+        ready: () => !get('_fireworksShopEquipmentBought'),
         completed: () => availableAmount($item`oversized sparkler`) > 0,
         do: () => ensureItem(1, $item`oversized sparkler`)
     }, {

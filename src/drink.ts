@@ -13,7 +13,7 @@ const Drink: CSQuest = {
             completed: () => !have($item`astral six-pack`),
             do: () => use($item`astral six-pack`),
         },
-        songTask($effect`Ode to Booze`, $effect`Ur-Kel's Aria of Annoyance`),
+        songTask($effect`Ode to Booze`, $effect`The Magical Mojomuscular Melody`),
         {
             name: "Drink Pilsners",
             ready: () => have($item`astral pilsner`),
