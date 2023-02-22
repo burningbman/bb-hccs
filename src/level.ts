@@ -7,7 +7,9 @@ import { OutfitSpec } from "grimoire-kolmafia";
 import {
     buy,
     cliExecute,
+    create,
     eat,
+    myDaycount,
     myHp,
     myLevel,
     myMaxhp,
@@ -37,7 +39,7 @@ import {
     have,
 } from "libram";
 
-const levellingComplete = myLevel() >= 13 && get("_neverendingPartyFreeTurns") >= 10;
+const levellingComplete = myLevel() >= 13 && (get("_neverendingPartyFreeTurns") >= 10 || myDaycount() > 1);
 let lovePotionConsidered = false;
 
 const foldshirt = (): void => {
@@ -45,7 +47,7 @@ const foldshirt = (): void => {
 };
 
 const CastSkills =
-    $skills`Stevedave's Shanty of Superiority, Fat Leon's Phat Loot Lyric, The Polka of Plenty, Leash of Linguini, Empathy of the Newt, Blood Bond, Blood Bubble, Song of Bravado, Get Big, Feel Excitement, Drescher's Annoying Noise, Elemental Saucesphere, Pride of the Puffin, Ur-Kel's Aria of Annoyance, Singer's Faithful Ocelot`
+    $skills`Prevent Scurvy and Sobriety, Advanced Saucecrafting, Stevedave's Shanty of Superiority, Fat Leon's Phat Loot Lyric, The Polka of Plenty, Leash of Linguini, Empathy of the Newt, Blood Bond, Blood Bubble, Song of Bravado, Get Big, Feel Excitement, Drescher's Annoying Noise, Elemental Saucesphere, Pride of the Puffin, Ur-Kel's Aria of Annoyance, Singer's Faithful Ocelot`
         .map((s) => ({
             name: s.name,
             do: (): void => {
@@ -207,6 +209,20 @@ const Level: CSQuest = {
         beachTask($effect`You Learned Something Maybe!`),
         beachTask($effect`We're All Made of Starfish`),
         ...CastSkills,
+        {
+            name: "Make & Use Ointment",
+            completed: () => have($effect`Mystically Oiled`),
+            ready: () => have($item`grapefruit`),
+            do: (): void => {
+                if (!have($item`ointment of the occult`)) {
+                    create(1, $item`ointment of the occult`);
+                }
+                if (have($item`ointment of the occult`)) {
+                    use(1, $item`ointment of the occult`);
+                }
+            },
+            limit: { tries: 1 }
+        },
         {
             name: "Holiday Yoked",
             completed: () => have($effect`Holiday Yoked`),
