@@ -42,11 +42,6 @@ const Noncombat: CSQuest = {
             ready: hasNcBird,
             do: () => useSkill($skill`Visit your Favorite Bird`),
         },
-        // {
-        //     name: "Swim Sprints",
-        //     completed: () => get("_olympicSwimmingPool"),
-        //     do: () => cliExecute("swim sprints"),
-        // },
         {
             name: "God Lobster",
             completed: () => get("_godLobsterFights") >= 3,

@@ -54,6 +54,7 @@ const CastSkills =
                 useSkill(s);
             },
             completed: () => (s.buff ? have(toEffect(s)) : s.timescast > 0),
+            limit: { tries: 1 }
         }))
         .map((task) => ({
             ...task,
@@ -105,6 +106,7 @@ const Level: CSQuest = {
             name: "Get Love Potion",
             completed: () => $skill`Love Mixology`.timescast > 0,
             do: () => useSkill(1, $skill`Love Mixology`),
+            limit: { tries: 1 }
         },
         {
             name: "Consider Love Potion",
@@ -227,6 +229,7 @@ const Level: CSQuest = {
             name: "Holiday Yoked",
             completed: () => have($effect`Holiday Yoked`),
             do: $location`Noob Cave`,
+            ready: () => (Boolean(!$effects`Holiday Yoked, Do You Crush What I Crush?, Let It Snow/Boil/Stink/Frighten/Grease, All I Want For Crimbo Is Stuff, Crimbo Wrapping`.find((eff) => have(eff)))),
             outfit: () =>
                 uniform({
                     changes: {
