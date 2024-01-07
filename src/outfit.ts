@@ -13,7 +13,7 @@ import {
 
 const DEFAULT_UNIFORM = (): OutfitSpec => ({
     hat: DaylightShavings.buffAvailable()
-        ? DaylightShavings.helmet
+        ? $item`Daylight Shavings Helmet`
         : $items`astral chapeau, Iunion Crown`,
     shirt: $items`Jurassic Parka, fresh coat of paint`,
     pants: $items`designer sweatpants, old sweatpants`,
@@ -44,7 +44,7 @@ const FAMILIAR_PICKS = [
     },
 ];
 
-export function chooseFamiliar(canAttack?: boolean): { familiar: Familiar; famequip: Item } {
+export function chooseFamiliar(canAttack = true): { familiar: Familiar; famequip: Item } {
     const pick = FAMILIAR_PICKS.find(
         ({ condition, familiar }) =>
             condition() &&

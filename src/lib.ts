@@ -404,12 +404,6 @@ export function getBestFamiliar(): Familiar {
   }
 }
 
-export function useBestFamiliar(): void {
-  const fam = getBestFamiliar();
-  fam === $familiar`Melodramedary` && equip($item`dromedary drinking helmet`, $slot`familiar`);
-  useFamiliar(getBestFamiliar());
-}
-
 export function mapMacro(
   location: Location,
   monster: Monster,

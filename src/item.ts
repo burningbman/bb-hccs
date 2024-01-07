@@ -1,10 +1,10 @@
 import { OutfitSpec } from "grimoire-kolmafia";
-import { availableAmount, canAdventure, cliExecute, create, knollAvailable, use, visitUrl } from "kolmafia";
+import { availableAmount, canAdventure, cliExecute, create, knollAvailable, toEffect, toItem, use, visitUrl } from "kolmafia";
 import { $effect, $familiar, $item, $items, $location, $skill, CommunityService, get, have, SourceTerminal } from "libram";
 import { CSStrategy, Macro } from "./combatMacros";
 import { songTask, skillTask, potionTask } from "./commons";
 import { CSQuest } from "./engine";
-import { ensureItem, synthItem } from "./lib";
+import { ensureItem, setChoice } from "./lib";
 import { uniform } from "./outfit";
 
 const MODIFIERS = ['item drop', 'booze drop'];
@@ -36,7 +36,7 @@ const ItemDrop: CSQuest = {
     songTask($effect`Fat Leon's Phat Loot Lyric`, $effect`Ode to Booze`),
     skillTask($skill`The Spirit of Taking`),
     skillTask($skill`Singer's Faithful Ocelot`),
-    ...$items`Salsa Caliente™ candle, lavender candy heart, bag of grain, emergency glowstick, autumn leaf`.map(
+    ...$items`Salsa Caliente™ candle, lavender candy heart, bag of grain, emergency glowstick`.map(
         potionTask
     ),
     {
@@ -85,9 +85,13 @@ const ItemDrop: CSQuest = {
         do: () => cliExecute("fortune buff item")
     },
     {
-        name: 'Synth Item',
-        completed: () => have($effect`Synthesis: Collection`),
-        do: () => synthItem()
+        name: 'Spit Rhymes',
+        ready: () => have(toItem(`Loathing Idol Microphone`)),
+        completed: () => have(toEffect(`Spitting Rhymes`)),
+        do: (): void => {
+            setChoice(1505, 3);
+            use(toItem(`Loathing Idol Microphone`));
+        }
     },
     skillTask($skill`Feel Lost`),
     skillTask($skill`Steely-Eyed Squint`)
